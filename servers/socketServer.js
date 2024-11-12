@@ -21,13 +21,13 @@ function socketServer(io) {
 
         // Send a message to a specific room
         socket.on('send_message', ({ roomName, message }) => {
-            // if (socket.rooms.has(roomName)){
+            if (socket.rooms.has(roomName)) {
                 console.log("Room Name: ", roomName)
                 console.log(userId, ":", message)
                 io.to(roomName).emit('receive_message', { message, sender: socket.id });
             }
             else {
-                console.log("Error : User is not in Room");   
+                console.log("Error : User is not in Room");
             }
         })
 
