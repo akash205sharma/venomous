@@ -1,3 +1,4 @@
+
 function socketServer(io) {
 
     io.on('connection', (socket) => {
@@ -20,38 +21,53 @@ function socketServer(io) {
 
         // Send a message to a specific room
         socket.on('send_message', ({ roomName, message }) => {
-            // console.log(message,roomName)
-            io.to(roomName).emit('receive_message', { message, sender: userId });
-        });
+            // if (socket.rooms.has(roomName)){
+                console.log("Room Name: ", roomName)
+                console.log(userId, ":", message)
+                io.to(roomName).emit('receive_message', { message, sender: socket.id });
+            }
+            else {
+                console.log("Error : User is not in Room");   
+            }
+        })
+
 
     });
-
-
-    /*    socket without room
-    
-        io.on('connection', (socket) => {
-            console.log('A user connected:', socket.id);
-    
-            // Listen for data from the client
-            socket.on('send_data', (data) => {
-                // console.log('Data received:', data);
-                // Emit data back to all connected clients
-                io.emit('receive_data', data);
-            });
-    
-    
-            // Disconnect
-    
-            // socket.on('disconnect', () => {
-            //     console.log('User disconnected:', socket.id);
-            // });
-    
-    
-        });
-    */
-
 
 
 }
 
 module.exports = socketServer;
+
+
+
+
+
+
+
+/*    socket without room
+ 
+    io.on('connection', (socket) => {
+        console.log('A user connected:', socket.id);
+ 
+        // Listen for data from the client
+        socket.on('send_data', (data) => {
+            // console.log('Data received:', data);
+            // Emit data back to all connected clients
+            io.emit('receive_data', data);
+        });
+ 
+ 
+        // Disconnect
+ 
+        // socket.on('disconnect', () => {
+        //     console.log('User disconnected:', socket.id);
+        // });
+ 
+ 
+    });
+*/
+
+
+
+

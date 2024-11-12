@@ -29,10 +29,13 @@ function Entry() {
 		socket.emit('join_room', roomName);
 	};
 
+
 	const handeljoinRoom = (e) => {
 		e.preventDefault();
-		if(Room.length()!=0) joinRoom("Room");
-		navigate('/room');
+		if(Room.length!=0) {
+			navigate('/room');
+			joinRoom(Room);
+		}
 	}
 
 	const handelchange = (e) => {

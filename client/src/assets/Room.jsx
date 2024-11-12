@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 import RoomContext from "../context/RoomContext"
@@ -14,6 +14,7 @@ if (!userId) {
 	localStorage.setItem('userId', userId);
 }
 
+// const socket = io('http://localhost:4000')
 const socket = io('http://localhost:4000', {
 	query: { userId }  // send userId to the server
 });
@@ -24,7 +25,7 @@ function Room() {
 
 	const navigate = useNavigate();
 
-	if( Room===""){
+	if (Room === "") {
 		navigate("/");
 	}
 
@@ -41,58 +42,58 @@ function Room() {
 
 	// Leave a room
 	const leaveRoom = (roomName) => {
-		localStorage.removeItem("messages");
 		socket.emit('leave_room', roomName);
 	};
 
 
-	// Listen for incoming messages from the room
+
 	useEffect(() => {
+		// Listen for incoming messages from the room
+
 		socket.on('receive_message', (data) => {   // here data is data.sender and data.message
 			setMessages((prevMessages) => {
 				const updatedMessages = [...prevMessages, data.message];
+				console.log(data.message,data.sender);
 				localStorage.setItem('messages', JSON.stringify(updatedMessages)); // Update localStorage with new messages
 				return updatedMessages;
 			});
 		});
-	}, []);
 
 
-	// 	// Emit data to server
-	// const sendMessage = (event) => {
-	// 	event.preventDefault();
-	// 	socket.emit('send_data', message);
-	// 	setMessage('');
-	// };
+		// Clean up listener on component unmount
+		return () => {
+			socket.off('receive_message');
+		};
 
+	}, [socket]);
 
 	// Send a message to a specific room
 	const sendMessageToRoom = (e) => {
 		e.preventDefault();
-		socket.emit('send_message', { Room, message });
+		socket.emit('send_message', { roomName: Room, message });
 		setMessage('');
 	};
 
 
-	const handelLeave = (e) => {
+	const handleLeave = (e) => {
 		e.preventDefault();
-		leaveRoom(Room);
-		SetRoomId("")
-		navigate("/");
-	}
+		leaveRoom(Room);  // Ensure this function works as intended
+		localStorage.removeItem("messages");
+		SetRoomId('');      // Clear the room ID
+		navigate("/");      // Navigate back to the home page
+	};
 
 
 
-
-	let x = 9;
-	let y = 9;
+	let x = 5;
+	let y = 0;
 
 
 	return (
 		<>
 			<div className='z-[-20] bg-[url(bg.avif)] bg-cover bg-center bg h-[100vh]'>
 
-				<button onClick={handelLeave} className = 'z-40 cursor-pointer fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {Room} </button>
+				<button onClick={handleLeave} className='z-40 cursor-pointer fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {Room} </button>
 
 				{/* snake and ladder */}
 

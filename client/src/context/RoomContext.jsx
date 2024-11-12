@@ -14,14 +14,14 @@ export const RoomProvider = ({ children }) => {
     const setRoomToState = () => {
         setRoom(
             localStorage.getItem('Room')
-                ? JSON.parse(localStorage.getItem('Room'))
+                ? localStorage.getItem('Room')
                 : []
         )
     }
 
     const SetRoomId = async (room) => {
 
-        localStorage.setItem("Room", JSON.stringify(room));
+        localStorage.setItem("Room", room );
         // Update the state to reflect the changes in the UI
         setRoom(room);
 
