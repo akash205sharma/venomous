@@ -11,7 +11,13 @@ function socketServer(io) {
         socket.on('join_room', (roomName) => {
             socket.join(roomName);
             console.log(`User ${userId} joined room ${roomName}`);
+            // io.emit('someOneJoined',"New User Connected room");
+            // console.log("After message to room");
+            socket.to(roomName).emit('receive_message', { message: `${userId} joined the room`, sender: "system" });
         });
+
+        // socket.on("typing", (room) => socket.in(room).emit("typing"));
+
 
         // Leave a room
         socket.on('leave_room', (roomName) => {
@@ -19,18 +25,27 @@ function socketServer(io) {
             console.log(`User ${socket.id} left room ${roomName}`);
         });
 
+
         // Send a message to a specific room
         socket.on('send_message', ({ roomName, message }) => {
-            if (socket.rooms.has(roomName)) {
+            console.log(`User ${userId} attempting to send message to room ${roomName}`);
+            // if (socket.rooms.has(roomName)) {
                 console.log("Room Name: ", roomName)
                 console.log(userId, ":", message)
-                io.to(roomName).emit('receive_message', { message, sender: socket.id });
-            }
-            else {
-                console.log("Error : User is not in Room");
-            }
+                // socket.broadcast.emit('receive_message', { message, sender: userId });
+                // users.forEach((user) => {  
+                io.to(roomName).emit('receive_message',  { message, sender: userId });
+                // })
+            // }
+            // else {
+                // console.log("Error : User is not in Room");
+            // }
         })
 
+        socket.off("setup", () => {
+            console.log("USER DISCONNECTED");
+            socket.leave(userId);
+        });
 
     });
 

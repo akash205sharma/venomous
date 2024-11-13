@@ -1,8 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
-import RoomContext from "../context/RoomContext"
-
+import { useRoom } from '../context/RoomContext';
 
 // For making different tab as same user
 
@@ -20,7 +19,7 @@ const socket = io('http://localhost:4000', {
 
 function Entry() {
 
-	const { Room, SetRoomId } = useContext(RoomContext);
+	const { room, setRoomName, addUser, addMessage, removeUser } = useRoom();
 
 	const navigate = useNavigate();
 
@@ -29,17 +28,31 @@ function Entry() {
 		socket.emit('join_room', roomName);
 	};
 
+	useEffect(() => {
+		socket.on("connect", () => {
+			console.log("connect client side", socket.id)
+		});
+
+	}, [])
+
 
 	const handeljoinRoom = (e) => {
 		e.preventDefault();
-		if(Room.length!=0) {
-			navigate('/room');
-			joinRoom(Room);
+		if (room.roomName.length != 0) {
+			navigate('/room')
+			joinRoom(room.roomName);
+			if (!room.users.includes(userId)) {
+				// userId is not in the room
+				addUser(userId);
+			}
+		}
+		else {
+			console.log("Enter Room Name")
 		}
 	}
 
 	const handelchange = (e) => {
-		SetRoomId(e.target.value);
+		setRoomName(e.target.value);
 	}
 
 	return (
@@ -48,10 +61,11 @@ function Entry() {
 
 				<form className='bg-blue-700 rounded-2xl p-10 m-auto flex flex-col gap-10 ' onSubmit={handeljoinRoom}>
 					{/* <div >Join or Create Room </div> */}
-					<input className='p-3  w-[20vw] rounded-xl text-2xl ' type="text" name='Room' onChange={handelchange} value={Room} placeholder='Enter Room Id' />
+					<input className='p-3  w-[20vw] rounded-xl text-2xl ' type="text" name='Room' onChange={handelchange} value={room.roomName} placeholder='Enter Room Id' />
 					<button className='p-2 text-white text-2xl bg-green-500 rounded-xl active:bg-green-800 focus:bg-green-500' type='submit' >Join</button>
 
 				</form>
+				
 
 			</div>
 		</>

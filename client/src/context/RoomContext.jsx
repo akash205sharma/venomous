@@ -1,39 +1,82 @@
-"use client";
+import React, { createContext, useState, useEffect, useContext } from 'react';
 
-import { useNavigate } from 'react-router-dom';
-import { createContext, useState, useEffect } from "react"
-const RoomContext = createContext()
+const RoomContext = createContext();
 
 export const RoomProvider = ({ children }) => {
-    const [Room, setRoom] = useState("")
+    const [room, setRoom] = useState({
+        roomName: '',
+        users: [],
+        messages: []
+    });
 
     useEffect(() => {
-        setRoomToState()
-    }, [])
+        // Load room from localStorage on mount
+        setRoomToState();
+    }, []);
 
     const setRoomToState = () => {
-        setRoom(
-            localStorage.getItem('Room')
-                ? localStorage.getItem('Room')
-                : []
-        )
-    }
+        const savedRoom = localStorage.getItem('Room');
+        setRoom(savedRoom ? JSON.parse(savedRoom) : {
+            roomName: '',
+            users: [],
+            messages: [],
+        });
+    };
 
-    const SetRoomId = async (room) => {
+    const setRoomName = (newRoomName) => {
+        setRoom(prevRoom => {
+            const updatedRoom = { ...prevRoom, roomName: newRoomName };
+            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            return updatedRoom;
+        });
+    };
 
-        localStorage.setItem("Room", room );
-        // Update the state to reflect the changes in the UI
-        setRoom(room);
+    const addUser = (user) => {
+        setRoom(prevRoom => {
+            const updatedRoom = { ...prevRoom, users: [...prevRoom.users, user] };
+            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            return updatedRoom;
+        });
+    };
 
-    }
+    // Function to remove a particular user from users array
+    const removeUser = (userId) => {
+        setRoom(prevRoom => {
+            const updatedRoom = {
+                ...prevRoom,
+                users: prevRoom.users.filter(user => user !== userId)
+            };
+            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            return updatedRoom;
+        });
+    };
+
+    const addMessage = (user, message) => {
+        const newMessage = { user, message, date: Date.now() };
+        setRoom(prevRoom => {
+            const updatedRoom = { ...prevRoom, messages: [...prevRoom.messages, newMessage] };
+            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            return updatedRoom;
+        });
+    };
+
+    const clearRoom = () => {
+        setRoom({
+            roomName: '',
+            users: [],
+            messages: []
+        });  // Reset state to initial values
+        localStorage.removeItem("Room");  // Clear from localStorage
+    };
 
     return (
         <RoomContext.Provider
-            value={{ Room, SetRoomId}}
+            value={{ room, setRoomName, addUser, addMessage, clearRoom, removeUser }}
         >
             {children}
         </RoomContext.Provider>
     );
 };
 
-export default RoomContext;
+// Custom hook to use RoomContext
+export const useRoom = () => useContext(RoomContext);

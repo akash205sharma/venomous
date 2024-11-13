@@ -1,38 +1,40 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
-import RoomContext from "../context/RoomContext"
+import { useRoom } from '../context/RoomContext';
 
 
 // const socket = io('http://localhost:4000');
 
 // For making different tab as same user
 
+// const socket = io('http://localhost:4000')
+
 let userId = localStorage.getItem('userId');
 if (!userId) {
 	userId = `user_${Date.now()}`; // or use any unique ID logic
+	// userId = socket.id; // or use any unique ID logic
 	localStorage.setItem('userId', userId);
 }
 
-// const socket = io('http://localhost:4000')
 const socket = io('http://localhost:4000', {
 	query: { userId }  // send userId to the server
 });
 
 
-function Room() {
-	const { Room, SetRoomId } = useContext(RoomContext);
 
+function Room() {
+	const { room, setRoomName, addUser, addMessage, clearRoom, removeUser } = useRoom();
+	const [message, setMessage] = useState("")
 	const navigate = useNavigate();
 
-	if (Room === "") {
-		navigate("/");
-	}
+	useEffect(() => {
 
+		// if (room.roomName === "") {
+		// 	navigate("/");
+		// }
 
-	const savedMessages = JSON.parse(localStorage?.getItem('messages'));
-	const [message, setMessage] = useState('');
-	const [messages, setMessages] = useState(savedMessages ? savedMessages : []);
+	}, [])
 
 
 	// Join a room
@@ -45,55 +47,93 @@ function Room() {
 		socket.emit('leave_room', roomName);
 	};
 
+	// update if one user leaveRoom///????
+
 
 
 	useEffect(() => {
 		// Listen for incoming messages from the room
-
-		socket.on('receive_message', (data) => {   // here data is data.sender and data.message
-			setMessages((prevMessages) => {
-				const updatedMessages = [...prevMessages, data.message];
-				console.log(data.message,data.sender);
-				localStorage.setItem('messages', JSON.stringify(updatedMessages)); // Update localStorage with new messages
-				return updatedMessages;
-			});
+		socket.on('receive_message', ({ message, sender }) => {
+			console.log(sender, message);
+			addMessage(sender, message);
 		});
-
 
 		// Clean up listener on component unmount
 		return () => {
 			socket.off('receive_message');
 		};
 
+
 	}, [socket]);
+
+	useEffect(() => {
+
+		socket.on('someOneJoined', (data) => {
+			console.log("New User Connected room client side")
+		});
+
+		return () => {
+			socket.off('someOneJoined');
+		};
+
+	}, [socket])
+
+
+
+
+
+
+
 
 	// Send a message to a specific room
 	const sendMessageToRoom = (e) => {
 		e.preventDefault();
-		socket.emit('send_message', { roomName: Room, message });
+		const roomName = room.roomName;
+		const users = room.users;
+		socket.emit('send_message', { roomName, message, users });
 		setMessage('');
 	};
 
 
 	const handleLeave = (e) => {
 		e.preventDefault();
-		leaveRoom(Room);  // Ensure this function works as intended
-		localStorage.removeItem("messages");
-		SetRoomId('');      // Clear the room ID
+		leaveRoom(room.roomName);  // Ensure this function works as intended
+
+		// setRoomName('');      // Clear the room ID
+		clearRoom();    //? deleting from my localstorage only or all 
 		navigate("/");      // Navigate back to the home page
 	};
 
 
 
-	let x = 5;
-	let y = 0;
+	let x = 0;
+	let y = 9;
+
+	// const [sendTo, setSendTo] = useState("");
+	// const [privateMsg, setPrivateMsg] = useState("");
+
+	// const handelPrivateMessage = (e) => {
+	// 	e.preventDefault();
+	// 	socket.emit('send_message', { sendTo, privateMsg, });
+	// 	setPrivateMsg('')
+	// 	setSendTo("")
+	// }
 
 
 	return (
 		<>
 			<div className='z-[-20] bg-[url(bg.avif)] bg-cover bg-center bg h-[100vh]'>
 
-				<button onClick={handleLeave} className='z-40 cursor-pointer fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {Room} </button>
+
+				{/* <form className='flex ' onSubmit={handelPrivateMessage}>
+					<input className='p-3  w-[20vw] rounded-xl text-2xl ' type="text" name='Room' onChange={(e) => { setSendTo(e.target.value) }} value={sendTo} placeholder='Enter Room Id' />
+					<input className='p-3  w-[20vw] rounded-xl text-2xl ' type="text" name='msg' onChange={(e) => { setPrivateMsg(e.target.value) }} value={privateMsg} placeholder='Enter Room Id' />
+					<div><button className='p-2 text-white text-2xl bg-green-500 rounded-xl active:bg-green-800 focus:bg-green-500' type='submit' >Send To Room</button>
+					</div>
+				</form> */}
+
+
+				<button onClick={handleLeave} className='z-40 cursor-pointer fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {room.roomName} </button>
 
 				{/* snake and ladder */}
 
@@ -141,10 +181,10 @@ function Room() {
 					<div className='h-[86vh] overflow-y-scroll' >
 						<div className='text-white' >
 							<h2>Messages:</h2>
-							{messages.map((msg, index) => (
+							{room.messages.map((msg, index) => (
 								<div className='my-3' key={index}>
-									<div className='flex' ><img width={25} src="avatar1.png" alt="" />Akash</div>
-									<div className='mx-7'>{msg}</div>
+									<div className='flex' ><img width={25} src="avatar1.png" alt="" />{msg.user}</div>
+									<div className='mx-7'>{msg.message}</div>
 								</div>
 							))}
 						</div>
