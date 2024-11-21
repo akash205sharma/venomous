@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
 
@@ -30,11 +30,9 @@ function Room() {
 
 	useEffect(() => {
 
-		// if (room.roomName === "") {
-		// 	navigate("/");
-		// }
+		joinRoom(room.roomName);    //******** very imp for Now
 
-	}, [])
+	}, [room.roomName])
 
 
 	// Join a room
@@ -52,6 +50,7 @@ function Room() {
 
 
 	useEffect(() => {
+
 		// Listen for incoming messages from the room
 		socket.on('receive_message', ({ message, sender }) => {
 			console.log(sender, message);
@@ -61,28 +60,9 @@ function Room() {
 		// Clean up listener on component unmount
 		return () => {
 			socket.off('receive_message');
-		};
-
+		};  
 
 	}, [socket]);
-
-	useEffect(() => {
-
-		socket.on('someOneJoined', (data) => {
-			console.log("New User Connected room client side")
-		});
-
-		return () => {
-			socket.off('someOneJoined');
-		};
-
-	}, [socket])
-
-
-
-
-
-
 
 
 	// Send a message to a specific room
@@ -90,17 +70,18 @@ function Room() {
 		e.preventDefault();
 		const roomName = room.roomName;
 		const users = room.users;
+		// joinRoom(roomName);
 		socket.emit('send_message', { roomName, message, users });
 		setMessage('');
+		// console.log('Rooms the svocket is part of:', socket.room);
 	};
+
 
 
 	const handleLeave = (e) => {
 		e.preventDefault();
 		leaveRoom(room.roomName);  // Ensure this function works as intended
-
-		// setRoomName('');      // Clear the room ID
-		clearRoom();    //? deleting from my localstorage only or all 
+		clearRoom();    // deleting from my localstorage only 
 		navigate("/");      // Navigate back to the home page
 	};
 

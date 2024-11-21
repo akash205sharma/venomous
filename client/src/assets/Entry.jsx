@@ -31,6 +31,7 @@ function Entry() {
 	useEffect(() => {
 		socket.on("connect", () => {
 			console.log("connect client side", socket.id)
+			
 		});
 
 	}, [])
@@ -45,6 +46,7 @@ function Entry() {
 				// userId is not in the room
 				addUser(userId);
 			}
+
 		}
 		else {
 			console.log("Enter Room Name")
