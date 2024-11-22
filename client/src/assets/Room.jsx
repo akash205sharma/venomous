@@ -24,13 +24,13 @@ const socket = io('http://localhost:4000', {
 
 
 function Room() {
-	const { room, setRoomName, addUser, addMessage, clearRoom, removeUser } = useRoom();
+	const { room, setRoomName, addUser, addMessage, clearRoom, removeUser, setGame } = useRoom();
 	const [message, setMessage] = useState("")
 	const navigate = useNavigate();
 
 	useEffect(() => {
 
-		joinRoom(room.roomName);    //******** very imp for Now
+		joinRoom(room.roomName);    /******** Very imp for Now ********/
 
 	}, [room.roomName])
 
@@ -60,7 +60,7 @@ function Room() {
 		// Clean up listener on component unmount
 		return () => {
 			socket.off('receive_message');
-		};  
+		};
 
 	}, [socket]);
 
@@ -87,31 +87,47 @@ function Room() {
 
 
 
-	let x = 0;
-	let y = 9;
+	const Grid = [
+		[[0, 9], 0], [[1, 9], 0], [[2, 9], 0], [[3, 9], 0], [[4, 9], 0], [[5, 9], 0], [[6, 9], 0], [[7, 9], 0], [[8, 9], 0], [[9, 9], 0],
+		[[9, 8], 0], [[8, 8], 0], [[7, 8], 0], [[6, 8], 0], [[5, 8], 0], [[4, 8], 0], [[3, 8], 0], [[2, 8], 0], [[1, 8], 0], [[0, 8], 0],
+		[[0, 7], 0], [[1, 7], 0], [[2, 7], 0], [[3, 7], 0], [[4, 7], 0], [[5, 7], 0], [[6, 7], 0], [[7, 7], 0], [[8, 7], 0], [[9, 7], 0],
+		[[9, 6], 0], [[8, 6], 0], [[7, 6], 0], [[6, 6], 0], [[5, 6], 0], [[4, 6], 0], [[3, 6], 0], [[2, 6], 0], [[1, 6], 0], [[0, 6], 0],
+		[[0, 5], 0], [[1, 5], 0], [[2, 5], 0], [[3, 5], 0], [[4, 5], 0], [[5, 5], 0], [[6, 5], 0], [[7, 5], 0], [[8, 5], 0], [[9, 5], 0],
+		[[9, 4], 0], [[8, 4], 0], [[7, 4], 0], [[6, 4], 0], [[5, 4], 0], [[4, 4], 0], [[3, 4], 0], [[2, 4], 0], [[1, 4], 0], [[0, 4], 0],
+		[[0, 3], 0], [[1, 3], 0], [[2, 3], 0], [[3, 3], 0], [[4, 3], 0], [[5, 3], 0], [[6, 3], 0], [[7, 3], 0], [[8, 3], 0], [[9, 3], 0],
+		[[9, 2], 0], [[8, 2], 0], [[7, 2], 0], [[6, 2], 0], [[5, 2], 0], [[4, 2], 0], [[3, 2], 0], [[2, 2], 0], [[1, 2], 0], [[0, 2], 0],
+		[[0, 1], 0], [[1, 1], 0], [[2, 1], 0], [[3, 1], 0], [[4, 1], 0], [[5, 1], 0], [[6, 1], 0], [[7, 1], 0], [[8, 1], 0], [[9, 1], 0],
+		[[9, 0], 0], [[8, 0], 0], [[7, 0], 0], [[6, 0], 0], [[5, 0], 0], [[4, 0], 0], [[3, 0], 0], [[2, 0], 0], [[1, 0], 0], [[0, 0], 0],
 
-	// const [sendTo, setSendTo] = useState("");
-	// const [privateMsg, setPrivateMsg] = useState("");
+	]
 
-	// const handelPrivateMessage = (e) => {
-	// 	e.preventDefault();
-	// 	socket.emit('send_message', { sendTo, privateMsg, });
-	// 	setPrivateMsg('')
-	// 	setSendTo("")
-	// }
+	const scores = room.game.scores;
 
+
+	const diceMove = () => {
+		const Dicevalue = Math.floor(1 + Math.random() * 6);
+		// setTimeout(() => {
+		//Dice rolling
+		let myscore = Dicevalue + scores[1];
+		if (myscore <= 99) {
+			let newscores = [scores[0], myscore, scores[2], scores[3]];
+			setGame(newscores);
+		}
+		console.log(Dicevalue)
+
+		// }, 100);
+
+	}
+
+
+
+	// setTimeout(() => {
+	// 	setGame([1,2,5,4],[1,0,5,3]);
+	// }, 3000);
 
 	return (
 		<>
 			<div className='z-[-20] bg-[url(bg.avif)] bg-cover bg-center bg h-[100vh]'>
-
-
-				{/* <form className='flex ' onSubmit={handelPrivateMessage}>
-					<input className='p-3  w-[20vw] rounded-xl text-2xl ' type="text" name='Room' onChange={(e) => { setSendTo(e.target.value) }} value={sendTo} placeholder='Enter Room Id' />
-					<input className='p-3  w-[20vw] rounded-xl text-2xl ' type="text" name='msg' onChange={(e) => { setPrivateMsg(e.target.value) }} value={privateMsg} placeholder='Enter Room Id' />
-					<div><button className='p-2 text-white text-2xl bg-green-500 rounded-xl active:bg-green-800 focus:bg-green-500' type='submit' >Send To Room</button>
-					</div>
-				</form> */}
 
 
 				<button onClick={handleLeave} className='z-40 cursor-pointer fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {room.roomName} </button>
@@ -119,8 +135,13 @@ function Room() {
 				{/* snake and ladder */}
 
 				<div className='absolute left-[45vh] top-2 h-[90vh] w-[50vw]' >
-					<img style={{ left: `${1.5 + 4.5 * x}rem`, top: `${2.5 + 4 * y}rem` }} className='relative z-20 h-[70px] w-[70px]' src="avatar1.png" alt="" />
-					<img className='absolute z-0 h-[90vh] w-[50vw] top-12' src="s&l2.avif" alt="" />
+					<img style={{ left: `${1.5 + 4.5 * Grid[scores[0]][0][0]}rem`, top: `${2.5 + 4 * (Grid[scores[0]][0][1])} rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar1.png" alt="" />
+					<img style={{ left: `${1.5 + 4.5 * Grid[scores[1]][0][0]}rem`, top: `${2.5 + 4 * (Grid[scores[1]][0][1] - 1)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar2.png" alt="" />
+					<img style={{ left: `${1.5 + 4.5 * Grid[scores[2]][0][0]}rem`, top: `${2.5 + 4 * (Grid[scores[2]][0][1] - 2)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar3.png" alt="" />
+					<img style={{ left: `${1.5 + 4.5 * Grid[scores[3]][0][0]}rem`, top: `${2.5 + 4 * (Grid[scores[3]][0][1] - 3)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar4.png" alt="" />
+
+
+					<img className='absolute z-0 h-[90vh] w-[50vw] top-12 ' src="s&l2.avif" alt="" />
 				</div>
 
 
@@ -138,7 +159,7 @@ function Room() {
 
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar2.png" alt="" /></div> Rishav </div>
-						<div className='h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src="two.png" alt="" /></div>
+						<div onClick={diceMove} className='cursor-pointer active:bg-red-600 h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src="two.png" alt="" /></div>
 					</div>
 
 

@@ -11,6 +11,14 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function({ addUtilities }) {
+      addUtilities({
+        '.transition-position': {
+          transition: 'top 2s ease, left 3s ease',
+        },
+      });
+    },
+  ],
 }
 

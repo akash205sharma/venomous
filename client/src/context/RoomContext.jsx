@@ -4,7 +4,10 @@ const RoomContext = createContext();
 
 export const RoomProvider = ({ children }) => {
     const [room, setRoom] = useState({
-        roomName: '',
+        game:{
+            scores:[0,0,0,0],     
+        },
+        roomName: '' ,
         users: [],
         messages: []
     });
@@ -17,12 +20,22 @@ export const RoomProvider = ({ children }) => {
     const setRoomToState = () => {
         const savedRoom = localStorage.getItem('Room');
         setRoom(savedRoom ? JSON.parse(savedRoom) : {
+            game:{                    
+                scores:[0,0,0,0],     
+            },            
             roomName: '',
             users: [],
             messages: [],
         });
     };
 
+    const setGame = (scores) => {
+        setRoom(prevRoom => {
+            const updatedRoom = { ...prevRoom, game: {scores} };
+            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            return updatedRoom;
+        });
+    };
     const setRoomName = (newRoomName) => {
         setRoom(prevRoom => {
             const updatedRoom = { ...prevRoom, roomName: newRoomName };
@@ -62,6 +75,9 @@ export const RoomProvider = ({ children }) => {
 
     const clearRoom = () => {
         setRoom({
+            game:{        
+                scores:[0,0,0,0],     
+            },
             roomName: '',
             users: [],
             messages: []
@@ -71,8 +87,8 @@ export const RoomProvider = ({ children }) => {
 
     return (
         <RoomContext.Provider
-            value={{ room, setRoomName, addUser, addMessage, clearRoom, removeUser }}
-        >
+            value={{ room, setRoomName, addUser, addMessage, clearRoom, removeUser, setGame }}
+        > 
             {children}
         </RoomContext.Provider>
     );

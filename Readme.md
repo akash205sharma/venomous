@@ -10,6 +10,8 @@ Fetures Includes
 
 Architecture
     1. LocalStorage & Context Api for RoomId, UserId.
+    2. joinroom in useEffect,
+    3. Array for positions.
 
 
 
@@ -19,7 +21,9 @@ Architecture
 
 
 Challenges I faced
-    1. Making different tabs as single user
+    1. Making different tabs as single user.
+    2. transition for position change transition-position handeled by it self.
+    3. how to Know which user is moving dice and changing position.
 
     
 
