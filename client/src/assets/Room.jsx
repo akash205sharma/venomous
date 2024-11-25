@@ -85,17 +85,18 @@ function Room() {
 		navigate("/");      // Navigate back to the home page
 	};
 
-
+	const dicefaces = ["one", "two", "three", "four", "five", "six"];
+	const [Dice, setDice] = useState(1);
 
 	const Grid = [
-		[[0, 9], 0], [[1, 9], 0], [[2, 9], 0], [[3, 9], 0], [[4, 9], 0], [[5, 9], 0], [[6, 9], 0], [[7, 9], 0], [[8, 9], 0], [[9, 9], 0],
-		[[9, 8], 0], [[8, 8], 0], [[7, 8], 0], [[6, 8], 0], [[5, 8], 0], [[4, 8], 0], [[3, 8], 0], [[2, 8], 0], [[1, 8], 0], [[0, 8], 0],
+		[[0, 9], 0], [[1, 9], 0], [[2, 9], 0], [[3, 9], 21], [[4, 9], 0], [[5, 9], 0], [[6, 9], 0], [[7, 9], 0], [[8, 9], 0], [[9, 9], 0],
+		[[9, 8], 0], [[8, 8], 0], [[7, 8], 33], [[6, 8], 0], [[5, 8], 0], [[4, 8], 0], [[3, 8], 0], [[2, 8], 0], [[1, 8], 0], [[0, 8], 0],
 		[[0, 7], 0], [[1, 7], 0], [[2, 7], 0], [[3, 7], 0], [[4, 7], 0], [[5, 7], 0], [[6, 7], 0], [[7, 7], 0], [[8, 7], 0], [[9, 7], 0],
 		[[9, 6], 0], [[8, 6], 0], [[7, 6], 0], [[6, 6], 0], [[5, 6], 0], [[4, 6], 0], [[3, 6], 0], [[2, 6], 0], [[1, 6], 0], [[0, 6], 0],
-		[[0, 5], 0], [[1, 5], 0], [[2, 5], 0], [[3, 5], 0], [[4, 5], 0], [[5, 5], 0], [[6, 5], 0], [[7, 5], 0], [[8, 5], 0], [[9, 5], 0],
+		[[0, 5], 0], [[1, 5], 0], [[2, 5], 0], [[3, 5], 0], [[4, 5], 0], [[5, 5], 0], [[6, 5], 0], [[7, 5], 0], [[8, 5], 0], [[9, 5], 19],
 		[[9, 4], 0], [[8, 4], 0], [[7, 4], 0], [[6, 4], 0], [[5, 4], 0], [[4, 4], 0], [[3, 4], 0], [[2, 4], 0], [[1, 4], 0], [[0, 4], 0],
-		[[0, 3], 0], [[1, 3], 0], [[2, 3], 0], [[3, 3], 0], [[4, 3], 0], [[5, 3], 0], [[6, 3], 0], [[7, 3], 0], [[8, 3], 0], [[9, 3], 0],
-		[[9, 2], 0], [[8, 2], 0], [[7, 2], 0], [[6, 2], 0], [[5, 2], 0], [[4, 2], 0], [[3, 2], 0], [[2, 2], 0], [[1, 2], 0], [[0, 2], 0],
+		[[0, 3], 0], [[1, 3], 19], [[2, 3], 0], [[3, 3], 0], [[4, 3], 0], [[5, 3], 0], [[6, 3], 0], [[7, 3], 0], [[8, 3], 0], [[9, 3], 0],
+		[[9, 2], 0], [[8, 2], 0], [[7, 2], 0], [[6, 2], 18], [[5, 2], 0], [[4, 2], 0], [[3, 2], 0], [[2, 2], 0], [[1, 2], 0], [[0, 2], 0],
 		[[0, 1], 0], [[1, 1], 0], [[2, 1], 0], [[3, 1], 0], [[4, 1], 0], [[5, 1], 0], [[6, 1], 0], [[7, 1], 0], [[8, 1], 0], [[9, 1], 0],
 		[[9, 0], 0], [[8, 0], 0], [[7, 0], 0], [[6, 0], 0], [[5, 0], 0], [[4, 0], 0], [[3, 0], 0], [[2, 0], 0], [[1, 0], 0], [[0, 0], 0],
 
@@ -105,17 +106,28 @@ function Room() {
 
 
 	const diceMove = () => {
-		const Dicevalue = Math.floor(1 + Math.random() * 6);
-		// setTimeout(() => {
+		// const Dicevalue = Math.floor(1 + Math.random() * 6);
+		const Dicevalue = 1;
+		setDice(Dicevalue);
 		//Dice rolling
 		let myscore = Dicevalue + scores[1];
 		if (myscore <= 99) {
 			let newscores = [scores[0], myscore, scores[2], scores[3]];
 			setGame(newscores);
 		}
+
+		setTimeout(() => {
+			if (Grid[Dicevalue + scores[1]][1] != 0) {
+				let myscore = Grid[Dicevalue + scores[1]][1] + Dicevalue + scores[1];
+				// console.log(Dicevalue)
+				if (myscore <= 99) {
+					let newscores = [scores[0], myscore, scores[2], scores[3]];
+					setGame(newscores);
+				}
+			}
+		}, 1500);
 		console.log(Dicevalue)
 
-		// }, 100);
 
 	}
 
@@ -159,7 +171,7 @@ function Room() {
 
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar2.png" alt="" /></div> Rishav </div>
-						<div onClick={diceMove} className='cursor-pointer active:bg-red-600 h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src="two.png" alt="" /></div>
+						<div onClick={diceMove} className='cursor-pointer active:bg-red-600 h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice - 1]}.png`} /></div>
 					</div>
 
 

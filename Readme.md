@@ -12,6 +12,7 @@ Architecture
     1. LocalStorage & Context Api for RoomId, UserId.
     2. joinroom in useEffect,
     3. Array for positions.
+    4. For dice logic , amp for position(x,y) to score.
 
 
 
@@ -24,6 +25,8 @@ Challenges I faced
     1. Making different tabs as single user.
     2. transition for position change transition-position handeled by it self.
     3. how to Know which user is moving dice and changing position.
+    3. Changing turn of players, which player to move
+    
 
     
 
