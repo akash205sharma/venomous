@@ -28,9 +28,11 @@ export const RoomProvider = ({ children }) => {
             messages: [],
         });
     };
-
-    const setGame = (scores) => {
-        setRoom(prevRoom => {
+ 
+    const setGame = (score,turn) => {
+        setRoom(prevRoom => {   
+            let scores=room.game.scores;
+            scores[turn] = score;   
             const updatedRoom = { ...prevRoom, game: {scores} };
             localStorage.setItem("Room", JSON.stringify(updatedRoom));
             return updatedRoom;

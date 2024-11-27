@@ -15,7 +15,11 @@ Architecture
     4. For dice logic , amp for position(x,y) to score.
 
 
+DICE LOGIC{
+    const dicefaces = ["one", "two", "three", "four", "five", "six"];  for image of dice
+    konse dice ki baari { Dice=useState([1,1,1,1])} and corresponding function to change values;
 
+}
 
 
 

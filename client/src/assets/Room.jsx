@@ -85,8 +85,23 @@ function Room() {
 		navigate("/");      // Navigate back to the home page
 	};
 
+
+
+
+
+
+	const scores = room.game.scores;
+	const [turn, setTurn] = useState(0);
+
 	const dicefaces = ["one", "two", "three", "four", "five", "six"];
-	const [Dice, setDice] = useState(1);
+	const [Dice, setDice] = useState([1, 1, 1, 1]);
+	const changeDiceValue = (value, turn) => {
+		let newDiceValues = Dice;
+		newDiceValues[turn] = value;
+		console.log(Dice);
+		setDice(newDiceValues);
+	}
+
 
 	const Grid = [
 		[[0, 9], 0], [[1, 9], 0], [[2, 9], 0], [[3, 9], 21], [[4, 9], 0], [[5, 9], 0], [[6, 9], 0], [[7, 9], 0], [[8, 9], 0], [[9, 9], 0],
@@ -102,34 +117,44 @@ function Room() {
 
 	]
 
-	const scores = room.game.scores;
 
 
 	const diceMove = () => {
 		const Dicevalue = Math.floor(1 + Math.random() * 6);
 		// const Dicevalue = 1;
-		setDice(Dicevalue);
+
+		changeDiceValue(Dicevalue, turn);
 		//Dice rolling
-		let myscore = Dicevalue + scores[1];
+		let myscore = Dicevalue + scores[turn];
 		if (myscore <= 99) {
-			let newscores = [scores[0], myscore, scores[2], scores[3]];
-			setGame(newscores);
+			setGame(myscore, turn);
 		}
 
 		setTimeout(() => {
-			if (Grid[Dicevalue + scores[1]][1] != 0) {
-				let myscore = Grid[Dicevalue + scores[1]][1] + Dicevalue + scores[1];
-				// console.log(Dicevalue)
+			if (Grid[Dicevalue + scores[turn]][1] != 0) {
+				let myscore = Grid[Dicevalue + scores[turn]][1] + Dicevalue + scores[turn];
 				if (myscore <= 99) {
-					let newscores = [scores[0], myscore, scores[2], scores[3]];
-					setGame(newscores);
+					setGame(myscore, turn);
 				}
 			}
 		}, 1500);
+
 		console.log(Dicevalue)
 
+		if (turn < 3) setTurn(turn + 1);
+		else setTurn(0);
 
 	}
+
+
+	// const stop=0;
+	// const play=(e) => {
+	//   e.preventDefault();
+	//   while(!stop){
+
+	//   }
+	// }
+
 
 
 
@@ -142,12 +167,13 @@ function Room() {
 			<div className='z-[-20] bg-[url(bg.avif)] bg-cover bg-center bg h-[100vh]'>
 
 
+				<button className='z-40 cursor-pointer fixed top-0 left-[43vw] bg-green-500 rounded-lg p-2 text-white font-bold' >PLAY{room.roomName} </button>
 				<button onClick={handleLeave} className='z-40 cursor-pointer fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {room.roomName} </button>
 
 				{/* snake and ladder */}
 
 				<div className='absolute left-[45vh] top-2 h-[90vh] w-[50vw]' >
-					<img style={{ left: `${1.5 + 4.5 * Grid[scores[0]][0][0]}rem`, top: `${2.5 + 4 * (Grid[scores[0]][0][1])} rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar1.png" alt="" />
+					<img style={{ left: `${1.5 + 4.5 * Grid[scores[0]][0][0]}rem`, top: `${7 + 4 * (Grid[scores[0]][0][1] - 1)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar1.png" alt="" />
 					<img style={{ left: `${1.5 + 4.5 * Grid[scores[1]][0][0]}rem`, top: `${2.5 + 4 * (Grid[scores[1]][0][1] - 1)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar2.png" alt="" />
 					<img style={{ left: `${1.5 + 4.5 * Grid[scores[2]][0][0]}rem`, top: `${2.5 + 4 * (Grid[scores[2]][0][1] - 2)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar3.png" alt="" />
 					<img style={{ left: `${1.5 + 4.5 * Grid[scores[3]][0][0]}rem`, top: `${2.5 + 4 * (Grid[scores[3]][0][1] - 3)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar4.png" alt="" />
@@ -164,26 +190,31 @@ function Room() {
 
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar1.png" alt="" /></div> Srishti </div>
-						<div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src="six.png" alt="" /></div>
+						{(turn == 0) && <div onClick={diceMove} className='  h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice[0] - 1]}.png`} /></div>}
+						{(turn != 0) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[0] - 1]}.png`} /></div>}
 					</div>
 
 
 
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar2.png" alt="" /></div> Rishav </div>
-						<div onClick={diceMove} className='cursor-pointer active:bg-red-600 h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice - 1]}.png`} /></div>
+
+						{(turn == 1) && <div onClick={diceMove} className='  h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice[0] - 1]}.png`} /></div>}
+						{(turn != 1) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[1] - 1]}.png`} /></div>}
 					</div>
 
 
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar3.png" alt="" /></div> Raghav </div>
-						<div className='h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src="five.png" alt="" /></div>
+						{(turn == 2) && <div onClick={diceMove} className='  h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice[2] - 1]}.png`} /></div>}
+						{(turn != 2) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[2] - 1]}.png`} /></div>}
 					</div>
 
 
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar4.png" alt="" /></div> Sharadha </div>
-						<div className='h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src="one.png" alt="" /></div>
+						{(turn == 3) && <div onClick={diceMove} className='  h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice[3] - 1]}.png`} /></div>}
+						{(turn != 3) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[3] - 1]}.png`} /></div>}
 					</div>
 				</div>
 
