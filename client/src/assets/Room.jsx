@@ -24,15 +24,9 @@ const socket = io('http://localhost:4000', {
 
 
 function Room() {
-	const { room, setRoomName, addUser, addMessage, clearRoom, removeUser, setGame } = useRoom();
+	const { room, setRoom, setScore, setTurn, setRoomName, addUser, addMessage, clearRoom, removeUser } = useRoom();
 	const [message, setMessage] = useState("")
 	const navigate = useNavigate();
-
-	useEffect(() => {
-
-		joinRoom(room.roomName);    /******** Very imp for Now ********/
-
-	}, [room.roomName])
 
 
 	// Join a room
@@ -45,7 +39,29 @@ function Room() {
 		socket.emit('leave_room', roomName);
 	};
 
+	const sendRoom = () => {
+		socket.emit('send_room', room);
+	}
+
+
+	useEffect(() => {
+
+		joinRoom(room.roomName);    /******** Very imp for Now ********/
+
+	}, [room.roomName])
+
 	// update if one user leaveRoom///????
+
+	useEffect(() => {
+
+		//Listen for incoming room
+		socket.on('receive_room', ({ room, sender }) => {
+			console.log(room, "Room data updated");
+			setRoom(room);
+		});
+
+
+	}, [socket])   //room or socket
 
 
 
@@ -88,17 +104,15 @@ function Room() {
 
 
 
-
-
 	const scores = room.game.scores;
-	const [turn, setTurn] = useState(0);
+	let turn = room.game.turn;
 
 	const dicefaces = ["one", "two", "three", "four", "five", "six"];
 	const [Dice, setDice] = useState([1, 1, 1, 1]);
 	const changeDiceValue = (value, turn) => {
-		let newDiceValues = Dice;
+		// let newDiceValues = Dice;        // dont write bcz  Direct Mutation, State Not Triggering Re-render : Since the reference to the array doesn't change
+		let newDiceValues = [...Dice];
 		newDiceValues[turn] = value;
-		console.log(Dice);
 		setDice(newDiceValues);
 	}
 
@@ -122,52 +136,54 @@ function Room() {
 	const diceMove = () => {
 		const Dicevalue = Math.floor(1 + Math.random() * 6);
 		// const Dicevalue = 1;
-
+		
 		changeDiceValue(Dicevalue, turn);
 		//Dice rolling
 		let myscore = Dicevalue + scores[turn];
 		if (myscore <= 99) {
-			setGame(myscore, turn);
+			setScore(myscore, turn);
 		}
-
+		
 		setTimeout(() => {
-			if (Grid[Dicevalue + scores[turn]][1] != 0) {
-				let myscore = Grid[Dicevalue + scores[turn]][1] + Dicevalue + scores[turn];
-				if (myscore <= 99) {
-					setGame(myscore, turn);
+			if (Grid[myscore][1] != 0) {
+				let updatedscore = Grid[myscore][1] + myscore;
+				if (updatedscore <= 99) {
+					setScore(updatedscore, turn);
 				}
 			}
+
+			if (turn < 3) setTurn(turn + 1);
+			else setTurn(0);
+			console.log(turn)
+
+			sendRoom();
 		}, 1500);
 
-		console.log(Dicevalue)
 
-		if (turn < 3) setTurn(turn + 1);
-		else setTurn(0);
 
 	}
 
 
-	// const stop=0;
-	// const play=(e) => {
-	//   e.preventDefault();
-	//   while(!stop){
-
-	//   }
-	// }
 
 
 
-
-	// setTimeout(() => {
-	// 	setGame([1,2,5,4],[1,0,5,3]);
-	// }, 3000);
 
 	return (
 		<>
 			<div className='z-[-20] bg-[url(bg.avif)] bg-cover bg-center bg h-[100vh]'>
 
+				{/* score card */}
+				<div className='flex fixed top-0 right-[70vw] bg-white z-50'>
+					<div className='border p-2 font-bold '>{scores[0] + 1}</div>
+					<div className='border p-2 font-bold '>{scores[1] + 1}</div>
+					<div className='border p-2 font-bold '>{scores[2] + 1}</div>
+					<div className='border p-2 font-bold '>{scores[3] + 1}</div>
+				</div>
 
-				<button className='z-40 cursor-pointer fixed top-0 left-[43vw] bg-green-500 rounded-lg p-2 text-white font-bold' >PLAY{room.roomName} </button>
+
+
+				{/* <button onClick={play} className='z-50 cursor-pointer fixed top-0 left-[35vw] bg-green-500 rounded-lg p-2 text-white font-bold' >PLAY{room.roomName} </button> */}
+
 				<button onClick={handleLeave} className='z-40 cursor-pointer fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {room.roomName} </button>
 
 				{/* snake and ladder */}
@@ -199,7 +215,7 @@ function Room() {
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar2.png" alt="" /></div> Rishav </div>
 
-						{(turn == 1) && <div onClick={diceMove} className='  h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice[0] - 1]}.png`} /></div>}
+						{(turn == 1) && <div onClick={diceMove} className='  h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice[1] - 1]}.png`} /></div>}
 						{(turn != 1) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[1] - 1]}.png`} /></div>}
 					</div>
 

@@ -33,6 +33,16 @@ function socketServer(io) {
             io.sockets.to(roomName).emit('receive_message', { message, sender: userId });
         })
 
+
+
+        //send game room  data
+        socket.on('send_room', (room) => {
+            console.log(`User ${userId} attempting to send game to room ${room.roomName}`);
+            console.log(socket.id, userId, ":", room)
+            socket.broadcast.to(room.roomName).emit('receive_room', { room, sender: userId });
+        })
+
+
         socket.off("setup", () => {
             console.log("USER DISCONNECTED");
             socket.leave(userId);

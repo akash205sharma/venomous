@@ -5,7 +5,8 @@ const RoomContext = createContext();
 export const RoomProvider = ({ children }) => {
     const [room, setRoom] = useState({
         game:{
-            scores:[0,0,0,0],     
+            turn:0,
+            scores:[0,0,0,0],   
         },
         roomName: '' ,
         users: [],
@@ -20,7 +21,8 @@ export const RoomProvider = ({ children }) => {
     const setRoomToState = () => {
         const savedRoom = localStorage.getItem('Room');
         setRoom(savedRoom ? JSON.parse(savedRoom) : {
-            game:{                    
+            game:{          
+                turn:0,          
                 scores:[0,0,0,0],     
             },            
             roomName: '',
@@ -29,15 +31,31 @@ export const RoomProvider = ({ children }) => {
         });
     };
  
-    const setGame = (score,turn) => {
+    const setTurn = (turn) => {
         setRoom(prevRoom => {   
             let scores=room.game.scores;
-            scores[turn] = score;   
-            const updatedRoom = { ...prevRoom, game: {scores} };
+            const updatedRoom = { ...prevRoom, game: {turn,scores} };
             localStorage.setItem("Room", JSON.stringify(updatedRoom));
             return updatedRoom;
         });
     };
+
+    const setScore = (score,turn) => {
+        setRoom(prevRoom => {   
+            let scores=room.game.scores;
+            scores[turn] = score;
+            const updatedRoom = { 
+                ...prevRoom,
+                game: {
+                    ...prevRoom.game,
+                    scores: [...prevRoom.game.scores, scores]
+                } 
+            };
+            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            return updatedRoom;
+        });
+    };
+
     const setRoomName = (newRoomName) => {
         setRoom(prevRoom => {
             const updatedRoom = { ...prevRoom, roomName: newRoomName };
@@ -78,6 +96,7 @@ export const RoomProvider = ({ children }) => {
     const clearRoom = () => {
         setRoom({
             game:{        
+                turn:0,
                 scores:[0,0,0,0],     
             },
             roomName: '',
@@ -89,7 +108,7 @@ export const RoomProvider = ({ children }) => {
 
     return (
         <RoomContext.Provider
-            value={{ room, setRoomName, addUser, addMessage, clearRoom, removeUser, setGame }}
+            value={{ room,setRoom, setRoomName, addUser, addMessage, clearRoom, removeUser, setScore,setTurn }}
         > 
             {children}
         </RoomContext.Provider>
