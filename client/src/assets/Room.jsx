@@ -2,6 +2,9 @@ import React, { useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
+import { useCallback } from 'react';
+import ReactPlayer from 'react-player'
+import peer from '../services/peer';
 
 
 // const socket = io('http://localhost:4000');
@@ -21,10 +24,17 @@ const socket = io('http://localhost:4000', {
 	query: { userId }  // send userId to the server
 });
 
+// console.log(socket);
+
+
+
+
+
 
 
 function Room() {
-	const { room, setRoom, setScore, setTurn, setRoomName, addUser, addMessage, clearRoom, removeUser } = useRoom();
+
+	const { room, updateRoom, setScore, setTurn, setRoomName, addUser, addMessage, clearRoom, removeUser } = useRoom();
 	const [message, setMessage] = useState("")
 	const navigate = useNavigate();
 
@@ -44,6 +54,7 @@ function Room() {
 	}
 
 
+
 	useEffect(() => {
 
 		joinRoom(room.roomName);    /******** Very imp for Now ********/
@@ -57,11 +68,20 @@ function Room() {
 		//Listen for incoming room
 		socket.on('receive_room', ({ room, sender }) => {
 			console.log(room, "Room data updated");
-			setRoom(room);
+			updateRoom(room);
 		});
 
+		return () => {
+			socket.off('receive_room');
+		};
 
 	}, [socket])   //room or socket
+
+	useEffect(() => {
+		if (room.roomName != "")      // as on refresh the room was becoming empty for a second before loading from loacalstorage and at that time it was sending that empty room
+			sendRoom();
+		
+	}, [room.game.turn])
 
 
 
@@ -102,15 +122,10 @@ function Room() {
 	};
 
 
-
-
-	const scores = room.game.scores;
-	let turn = room.game.turn;
-
 	const dicefaces = ["one", "two", "three", "four", "five", "six"];
 	const [Dice, setDice] = useState([1, 1, 1, 1]);
 	const changeDiceValue = (value, turn) => {
-		// let newDiceValues = Dice;        // dont write bcz  Direct Mutation, State Not Triggering Re-render : Since the reference to the array doesn't change
+		// let newDiceValues = Dice;        // **dont write bcz  Direct Mutation, State Not Triggering Re-render : Since the reference to the array doesn't change**
 		let newDiceValues = [...Dice];
 		newDiceValues[turn] = value;
 		setDice(newDiceValues);
@@ -127,73 +142,181 @@ function Room() {
 		[[0, 3], 0], [[1, 3], 19], [[2, 3], 0], [[3, 3], 0], [[4, 3], 0], [[5, 3], -21], [[6, 3], 0], [[7, 3], 0], [[8, 3], 0], [[9, 3], 0],
 		[[9, 2], 0], [[8, 2], 0], [[7, 2], 0], [[6, 2], 18], [[5, 2], 0], [[4, 2], 0], [[3, 2], 0], [[2, 2], 0], [[1, 2], 0], [[0, 2], 0],
 		[[0, 1], 0], [[1, 1], 0], [[2, 1], 0], [[3, 1], 0], [[4, 1], 0], [[5, 1], 0], [[6, 1], 0], [[7, 1], 0], [[8, 1], -36], [[9, 1], 0],
-		[[9, 0], 0], [[8, 0], 0], [[7, 0], 0], [[6, 0], 0], [[5, 0], -18], [[4, 0], 0], [[3, 0], 0], [[2, 0], 0], [[1, 0], 0], [[0, 0], 0],
+		[[9, 0], 0], [[8, 0], 0], [[7, 0], 0], [[6, 0], 0], [[5, 0], -18], [[4, 0], 0], [[3, 0], 0], [[2, 0], 0], [[1, 0], -58], [[0, 0], 0],
 
 	]
+	const scores = room.game.scores
+	const turn = room.game.turn
+	const [isclickable, setIsclickable] = useState(1);
+	const [isrolling, setIsrolling] = useState(0);
 
-
-
-	const diceMove = () => {
-		const Dicevalue = Math.floor(1 + Math.random() * 6);
-		// const Dicevalue = 1;
-		
-		changeDiceValue(Dicevalue, turn);
-		//Dice rolling
-		let myscore = Dicevalue + scores[turn];
-		if (myscore <= 99) {
-			setScore(myscore, turn);
-		}
-		
+	const diceMove = (e) => {
+		setIsrolling(1);
+		setIsclickable(0)
 		setTimeout(() => {
-			if (Grid[myscore][1] != 0) {
-				let updatedscore = Grid[myscore][1] + myscore;
-				if (updatedscore <= 99) {
-					setScore(updatedscore, turn);
-				}
+			const Dicevalue = Math.floor(1 + Math.random() * 6);
+			// const Dicevalue = 1;
+			setIsrolling(0)
+			changeDiceValue(Dicevalue, turn);
+			//Dice rolling
+			let myscore = Dicevalue + scores[turn];
+			if (myscore <= 99) {
+				setScore(myscore, turn);
+				//check for snake or ladder
+
+				setTimeout(() => {
+					if (Grid[myscore][1] != 0) {
+						let updatedscore = Grid[myscore][1] + myscore;
+						if (updatedscore <= 99) {
+							setScore(updatedscore, turn);
+						}
+					}
+					if (turn < 3) setTurn(turn + 1);
+					else setTurn(0);
+					setIsclickable(1)
+					console.log(turn)
+
+				}, 1700);
+			}
+			else {
+				if (turn < 3) setTurn(turn + 1);
+				else setTurn(0);
+				setIsclickable(1)
+				console.log(turn)
 			}
 
-			if (turn < 3) setTurn(turn + 1);
-			else setTurn(0);
-			console.log(turn)
-
-			sendRoom();
-		}, 1500);
-
+		}, 1200);
 
 
 	}
 
 
+	//{    // Video call logic
 
+	const [myStream, setMyStream] = useState()
+	const [remoteStream, setRemoteStream] = useState()
+
+	const handleCall = useCallback(async () => {
+		const stream = await navigator.mediaDevices.getUserMedia({
+			audio: true,
+			video: true
+		});
+		const offer = await peer.getOffer();
+		socket.emit("forward_call", { to: room.roomName, offer });
+		setMyStream(stream)
+		console.log("Call Forwarding started");
+
+	}, [room.roomName, socket]);
+
+
+	const handleIncommingCall = useCallback(async ({ from, offer }) => {
+		console.log("incomming_call", from, offer);
+
+		const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+		setMyStream(stream)
+
+		const ans = await peer.getAnswer(offer)
+		socket.emit('call_accepted', { to: room.roomName, ans });
+
+	}, [socket]);
+
+	const sendStreams = useCallback(() => {
+		for (const track of myStream.getTracks()) {
+			peer.peer.addTrack(track, myStream);
+		}
+	}, [myStream]);
+
+	const handleCallAccepted = useCallback(({ from, ans }) => {
+		peer.setLocalDescription(ans)   // await added by myself
+		console.log("Call Accepted");
+		sendStreams();
+	}, [sendStreams]);
+
+	const handleNegoNeeded = useCallback(async () => {
+		const offer = await peer.getOffer();
+		socket.emit('peer_nego_needed', { offer, to: room.roomName });
+
+	}, [room.roomName, socket]);   //???????????????????
+
+	const handleNegoNeedIncomming = useCallback(async ({ from, offer }) => {
+		const ans = await peer.getAnswer(offer);
+		socket.emit('peer_nego_done', { to: from, ans })
+	}, [socket])
+
+	const handleNegoNeedFinal = useCallback(async ({ ans }) => {
+		await peer.setLocalDescription(ans)
+	}, []);
+
+
+	useEffect(() => {
+		peer.peer.addEventListener('negotiationneeded', handleNegoNeeded);
+
+		return () => {
+			peer.peer.removeEventListener('negotiationneeded', handleNegoNeeded);
+		}
+	}, [handleNegoNeeded])
+
+
+	useEffect(() => {
+		peer.peer.addEventListener('track', async (ev) => {
+			const remoteStream = ev.streams;
+			// console.log('got tracks', remoteStream)
+
+			setRemoteStream(remoteStream[0]);
+
+			// console.log("remoteStream",remoteStream[0])
+
+		})
+
+	}, []);
+
+
+
+	useEffect(() => {
+		socket.on('incomming_call', handleIncommingCall)
+		socket.on('call_accepted', handleCallAccepted)
+		socket.on('peer_nego_needed', handleNegoNeedIncomming)
+		socket.on('peer_nego_final', handleNegoNeedFinal)
+
+		return () => {
+			socket.off('incomming_call', handleIncommingCall)
+			socket.off('call_accepted', handleCallAccepted)
+			socket.off('peer_nego_needed', handleNegoNeedIncomming)
+			socket.off('peer_nego_final', handleNegoNeedFinal)
+
+		}
+	}, [socket, handleIncommingCall, handleCallAccepted, handleNegoNeedIncomming, handleNegoNeedFinal]);
+
+
+
+	console.log("myStream", myStream)
+	console.log("remoteStream", remoteStream)
 
 
 
 	return (
 		<>
-			<div className='z-[-20] bg-[url(bg.avif)] bg-cover bg-center bg h-[100vh]'>
+			<div className='z-[-20] bg-[url(bg.avif)] bg-cover bg-center bg h-[200vh]'>
 
 				{/* score card */}
 				<div className='flex fixed top-0 right-[70vw] bg-white z-50'>
-					<div className='border p-2 font-bold '>{scores[0] + 1}</div>
-					<div className='border p-2 font-bold '>{scores[1] + 1}</div>
-					<div className='border p-2 font-bold '>{scores[2] + 1}</div>
-					<div className='border p-2 font-bold '>{scores[3] + 1}</div>
+					<div className='border p-2 font-bold '>{scores[0]}</div>
+					<div className='border p-2 font-bold '>{scores[1]}</div>
+					<div className='border p-2 font-bold '>{scores[2]}</div>
+					<div className='border p-2 font-bold '>{scores[3]}</div>
 				</div>
 
 
-
-				{/* <button onClick={play} className='z-50 cursor-pointer fixed top-0 left-[35vw] bg-green-500 rounded-lg p-2 text-white font-bold' >PLAY{room.roomName} </button> */}
 
 				<button onClick={handleLeave} className='z-40 cursor-pointer fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {room.roomName} </button>
 
 				{/* snake and ladder */}
 
 				<div className='absolute left-[45vh] top-2 h-[90vh] w-[50vw]' >
-					<img style={{ left: `${1.5 + 4.5 * Grid[scores[0]][0][0]}rem`, top: `${7 + 4 * (Grid[scores[0]][0][1] - 1)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar1.png" alt="" />
+					<img style={{ left: `${1.5 + 4.5 * Grid[scores[0]][0][0]}rem`, top: `${7.0 + 4 * (Grid[scores[0]][0][1] - 1)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar1.png" alt="" />
 					<img style={{ left: `${1.5 + 4.5 * Grid[scores[1]][0][0]}rem`, top: `${2.5 + 4 * (Grid[scores[1]][0][1] - 1)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar2.png" alt="" />
 					<img style={{ left: `${1.5 + 4.5 * Grid[scores[2]][0][0]}rem`, top: `${2.5 + 4 * (Grid[scores[2]][0][1] - 2)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar3.png" alt="" />
 					<img style={{ left: `${1.5 + 4.5 * Grid[scores[3]][0][0]}rem`, top: `${2.5 + 4 * (Grid[scores[3]][0][1] - 3)}rem` }} className='transition-position relative z-20 h-[70px] w-[70px]' src="avatar4.png" alt="" />
-
 
 					<img className='absolute z-0 h-[90vh] w-[50vw] top-12 ' src="s&l2.avif" alt="" />
 				</div>
@@ -206,7 +329,7 @@ function Room() {
 
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar1.png" alt="" /></div> Srishti </div>
-						{(turn == 0) && <div onClick={diceMove} className='  h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice[0] - 1]}.png`} /></div>}
+						{(turn == 0) && <div onClick={isclickable ? diceMove : null} className='h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={isrolling ? "rollingDice.gif" : `${dicefaces[Dice[0] - 1]}.png`} /></div>}
 						{(turn != 0) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[0] - 1]}.png`} /></div>}
 					</div>
 
@@ -215,21 +338,21 @@ function Room() {
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar2.png" alt="" /></div> Rishav </div>
 
-						{(turn == 1) && <div onClick={diceMove} className='  h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice[1] - 1]}.png`} /></div>}
+						{(turn == 1) && <div onClick={isclickable ? diceMove : null} className=' h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={isrolling ? "rollingDice.gif" : `${dicefaces[Dice[1] - 1]}.png`} /></div>}
 						{(turn != 1) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[1] - 1]}.png`} /></div>}
 					</div>
 
 
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar3.png" alt="" /></div> Raghav </div>
-						{(turn == 2) && <div onClick={diceMove} className='  h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice[2] - 1]}.png`} /></div>}
+						{(turn == 2) && <div onClick={isclickable ? diceMove : null} className=' h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={isrolling ? "rollingDice.gif" : `${dicefaces[Dice[2] - 1]}.png`} /></div>}
 						{(turn != 2) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[2] - 1]}.png`} /></div>}
 					</div>
 
 
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar4.png" alt="" /></div> Sharadha </div>
-						{(turn == 3) && <div onClick={diceMove} className='  h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={`${dicefaces[Dice[3] - 1]}.png`} /></div>}
+						{(turn == 3) && <div onClick={isclickable ? diceMove : null} className=' h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={isrolling ? "rollingDice.gif" : `${dicefaces[Dice[3] - 1]}.png`} /></div>}
 						{(turn != 3) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[3] - 1]}.png`} /></div>}
 					</div>
 				</div>
@@ -269,7 +392,19 @@ function Room() {
 				</div>
 
 
+
+				{/* Video Call */}
+				<div>
+					<button onClick={handleCall} className='text-white bg-green-500 rounded m-4 px-5 py-2'>Call</button>
+					{myStream && <button onClick={sendStreams} className='text-white bg-green-500 rounded m-4 px-5 py-2'>Send video</button>}
+				</div>
+				<h1>MY Video</h1>
+				{myStream && <ReactPlayer playing  height={300} width={300} url={myStream} />}
+				<h1>Friend Video</h1>
+				{remoteStream && <div className='border border-black'> <ReactPlayer playing  height={200} width={200} url={remoteStream} /> </div>}
 			</div>
+
+
 		</>
 	)
 }

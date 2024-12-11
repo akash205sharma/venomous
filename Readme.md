@@ -34,6 +34,15 @@ Challenges I faced
     2. transition for position change transition-position handeled by it self.
     3. how to Know which user is moving dice and changing position.
     3. Changing turn of players, which player to move
+    4. Double click on dice{
+        is clickable state and isrolling state;
+    }
+    
 
     
+	useEffect(() => {
+		if(room.roomName !="")      // as on refresh the room was becoming empty for a second before loading from loacalstorage and at that time it was sending that empty room
+	  sendRoom();
+
+	}, [room.game.turn])
 

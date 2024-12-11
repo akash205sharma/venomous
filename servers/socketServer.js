@@ -40,6 +40,7 @@ function socketServer(io) {
             console.log(`User ${userId} attempting to send game to room ${room.roomName}`);
             console.log(socket.id, userId, ":", room)
             socket.broadcast.to(room.roomName).emit('receive_room', { room, sender: userId });
+            // io.sockets.to(room.roomName).emit('receive_room', { room, sender: userId });
         })
 
 
@@ -47,6 +48,37 @@ function socketServer(io) {
             console.log("USER DISCONNECTED");
             socket.leave(userId);
         });
+
+
+        // video call logic
+
+        socket.on('forward_call', ({to, offer}) => {
+        
+            socket.broadcast.to(to).emit('incomming_call', { from: userId ,offer });
+        
+        })
+        socket.on('call_accepted', ({ to, ans}) => {
+            
+            socket.broadcast.to(to).emit('call_accepted', { from: userId , ans });
+
+        })
+        socket.on('peer_nego_needed', ({to ,offer })=>{
+            
+            // console.log("peer_nego_needed",offer)
+
+            socket.broadcast.to(to).emit('peer_nego_needed', { from: userId ,offer });
+        })
+        socket.on('peer_nego_done',({to,ans})=>{
+
+            console.log("peer_nego_done",ans)
+            
+            socket.broadcast.to(to).emit('peer_nego_final', { from: userId ,ans });
+        })
+
+
+
+
+
 
     });
 
