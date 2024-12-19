@@ -191,6 +191,9 @@ function Room() {
 	}
 
 
+
+	
+
 	//{    // Video call logic
 
 	const [myStream, setMyStream] = useState()
@@ -265,7 +268,7 @@ function Room() {
 			setRemoteStream(remoteStream[0]);
 
 			// console.log("remoteStream",remoteStream[0])
-
+			
 		})
 
 	}, []);
@@ -399,9 +402,9 @@ function Room() {
 					{myStream && <button onClick={sendStreams} className='text-white bg-green-500 rounded m-4 px-5 py-2'>Send video</button>}
 				</div>
 				<h1>MY Video</h1>
-				{myStream && <ReactPlayer playing  height={300} width={300} url={myStream} />}
 				<h1>Friend Video</h1>
-				{remoteStream && <div className='border border-black'> <ReactPlayer playing  height={200} width={200} url={remoteStream} /> </div>}
+				{remoteStream && <ReactPlayer playing  height={300} width={300} url={remoteStream} /> }
+				{myStream && <ReactPlayer playing  height={300} width={300} url={myStream} />}
 			</div>
 
 

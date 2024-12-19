@@ -1,7 +1,11 @@
 
+// var first = 0;  // initailizes to zero only on server restart.
+
 function socketServer(io) {
 
-    io.on('connection', (socket) => {
+    var first = 0;    //initializes to zero only on server restart.
+
+    io.on('connection', (socket) => {      // runs every time on client reload
 
         const userId = socket.handshake.query.userId;
 
@@ -52,33 +56,35 @@ function socketServer(io) {
 
         // video call logic
 
-        socket.on('forward_call', ({to, offer}) => {
-        
-            socket.broadcast.to(to).emit('incomming_call', { from: userId ,offer });
-        
-        })
-        socket.on('call_accepted', ({ to, ans}) => {
-            
-            socket.broadcast.to(to).emit('call_accepted', { from: userId , ans });
+        socket.on('forward_call', ({ to, offer }) => {
+
+            socket.broadcast.to(to).emit('incomming_call', { from: userId, offer });
 
         })
-        socket.on('peer_nego_needed', ({to ,offer })=>{
-            
+        socket.on('call_accepted', ({ to, ans }) => {
+
+            socket.broadcast.to(to).emit('call_accepted', { from: userId, ans });
+
+        })
+        socket.on('peer_nego_needed', ({ to, offer }) => {
+
             // console.log("peer_nego_needed",offer)
 
-            socket.broadcast.to(to).emit('peer_nego_needed', { from: userId ,offer });
+            socket.broadcast.to(to).emit('peer_nego_needed', { from: userId, offer });
         })
-        socket.on('peer_nego_done',({to,ans})=>{
+        socket.on('peer_nego_done', ({ to, ans }) => {
 
-            console.log("peer_nego_done",ans)
-            
-            socket.broadcast.to(to).emit('peer_nego_final', { from: userId ,ans });
+            console.log("peer_nego_done", ans)
+
+            socket.broadcast.to(to).emit('peer_nego_final', { from: userId, ans });
         })
 
-
-
-
-
+        // var first = 0;    //initializes to zero on client reload means soclet connection
+        socket.on("changeFirst", () => {
+            first++;
+            console.log("first", first);
+            socket.emit("updatedFirst", { newFirst: first });
+        })
 
     });
 

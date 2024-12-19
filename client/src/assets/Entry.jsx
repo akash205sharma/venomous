@@ -20,6 +20,7 @@ const socket = io('http://localhost:4000', {
 function Entry() {
 
 	const { room, setRoomName, addUser, addMessage, removeUser } = useRoom();
+	const [RoomId, setRoomId] = useState("")
 
 	const navigate = useNavigate();
 
@@ -31,7 +32,7 @@ function Entry() {
 	useEffect(() => {
 		socket.on("connect", () => {
 			console.log("connect client side", socket.id)
-			
+
 		});
 
 	}, [])
@@ -39,7 +40,9 @@ function Entry() {
 
 	const handeljoinRoom = (e) => {
 		e.preventDefault();
-		if (room.roomName.length != 0) {
+
+		if (RoomId.length != 0) {
+			setRoomName(RoomId);
 			navigate('/room')
 			joinRoom(room.roomName);
 			if (!room.users.includes(userId)) {
@@ -49,13 +52,26 @@ function Entry() {
 
 		}
 		else {
-			console.log("Enter Room Name")
+			alert("Enter Room Name")
 		}
 	}
 
 	const handelchange = (e) => {
-		setRoomName(e.target.value);
+		setRoomId(e.target.value);
 	}
+
+
+
+	const suggest = () => {
+		const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		let Id = '';
+		for (let i = 0; i < 10; i++) {
+			const randomI = Math.floor(Math.random() * characters.length);
+			Id += characters[randomI];
+		}
+		setRoomId(Id);
+	}
+
 
 	return (
 		<>
@@ -63,11 +79,14 @@ function Entry() {
 
 				<form className='bg-blue-700 rounded-2xl p-10 m-auto flex flex-col gap-10 ' onSubmit={handeljoinRoom}>
 					{/* <div >Join or Create Room </div> */}
-					<input className='p-3  w-[20vw] rounded-xl text-2xl ' type="text" name='Room' onChange={handelchange} value={room.roomName} placeholder='Enter Room Id' />
-					<button className='p-2 text-white text-2xl bg-green-500 rounded-xl active:bg-green-800 focus:bg-green-500' type='submit' >Join</button>
+					<input className='p-3  w-[20vw] rounded-xl text-2xl ' type="text" name='Room' onChange={handelchange} value={RoomId} placeholder='Enter Room Id' />
+					<div className='flex justify-between'>
+						<button onClick={suggest} className='py-2 px-6 text-white text-md bg-green-500 rounded-xl active:bg-green-800 focus:bg-green-500' type='button'>Suggest new Room Id</button>
+						<button className='py-2 px-6 text-white text-2xl bg-green-500 rounded-xl active:bg-green-800 focus:bg-green-500' type='submit' >Join</button>
+					</div>
 
 				</form>
-				
+
 
 			</div>
 		</>
