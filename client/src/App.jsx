@@ -10,6 +10,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import Entry from './assets/Entry';
 import Room from './assets/Room';
+import Joining from './assets/Joining';
 
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
 	<BrowserRouter>
       <Routes>
         <Route path="/" element={<Entry />} />
+        <Route path="/joining" element={<Joining />} />
         <Route path="/room" element={<Room />} />
       </Routes>
     </BrowserRouter>

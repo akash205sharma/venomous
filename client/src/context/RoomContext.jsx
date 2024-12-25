@@ -1,6 +1,8 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 
 const RoomContext = createContext();
+const storage = sessionStorage
+// const storage = localStorage
 
 export const RoomProvider = ({ children }) => {
     const [room, setRoom] = useState({
@@ -9,31 +11,31 @@ export const RoomProvider = ({ children }) => {
             scores: [0, 0, 0, 0],
         },
         roomName: '',
-        users: [],
+        users: {},
         messages: []
     });
 
     useEffect(() => {
-        // Load room from localStorage on mount
+        // Load room from storage on mount
         setRoomToState();
     }, []);
 
 
     const updateRoom = (newRoom) => {
-        localStorage.setItem("Room", JSON.stringify(newRoom));
+        storage.setItem("Room", JSON.stringify(newRoom));
         setRoom(newRoom);
     }
 
 
     const setRoomToState = () => {
-        const savedRoom = localStorage.getItem('Room');
+        const savedRoom = storage.getItem('Room');
         setRoom(savedRoom ? JSON.parse(savedRoom) : {
             game: {
                 turn: 0,
                 scores: [0, 0, 0, 0],
             },
             roomName: '',
-            users: [],
+            users: {},
             messages: [],
         });
     };
@@ -42,7 +44,7 @@ export const RoomProvider = ({ children }) => {
         setRoom(prevRoom => {
             let scores = room.game.scores;
             const updatedRoom = { ...prevRoom, game: { turn, scores } };
-            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            storage.setItem("Room", JSON.stringify(updatedRoom));
             return updatedRoom;
         });
     };
@@ -58,7 +60,7 @@ export const RoomProvider = ({ children }) => {
                     scores: [...prevRoom.game.scores, scores]
                 }
             };
-            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            storage.setItem("Room", JSON.stringify(updatedRoom));
             return updatedRoom;
         });
     };
@@ -66,36 +68,68 @@ export const RoomProvider = ({ children }) => {
     const setRoomName = (newRoomName) => {
         setRoom(prevRoom => {
             const updatedRoom = { ...prevRoom, roomName: newRoomName };
-            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            storage.setItem("Room", JSON.stringify(updatedRoom));
             return updatedRoom;
         });
+    };
+    const setUsers = (users) => {
+        const transformedUsers = Object.fromEntries(
+            Object.entries(users).map(([key, value]) => [
+                key,
+                {
+                    user_name: value[1],
+                    // id: value[1],
+                },
+            ])
+        );
+
+        setRoom((prevRoom) => ({
+            ...prevRoom,
+            users: transformedUsers,
+        }));
     };
 
-    const addUser = (user) => {
+    const addUser = ({ userId, user }) => {
         setRoom(prevRoom => {
-            const updatedRoom = { ...prevRoom, users: [...prevRoom.users, user] };
-            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            // Update the users array with the new user
+            const updatedRoom = {
+                ...prevRoom,
+                users: {
+                    ...prevRoom.users,
+                    [userId]: user
+                }
+            }; storage.setItem("Room", JSON.stringify(updatedRoom));
             return updatedRoom;
         });
     };
+    
 
     // Function to remove a particular user from users array
     const removeUser = (userId) => {
         setRoom(prevRoom => {
+            // Create a copy of the current users object
+            const updatedUsers = { ...prevRoom.users };
+
+            // Remove the user with the specified userId
+            delete updatedUsers[userId];
+
+            // Update the room with the modified users object
             const updatedRoom = {
                 ...prevRoom,
-                users: prevRoom.users.filter(user => user !== userId)
+                users: updatedUsers
             };
-            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            storage.setItem("Room", JSON.stringify(updatedRoom));
+
             return updatedRoom;
         });
     };
+
 
     const addMessage = (user, message) => {
         const newMessage = { user, message, date: Date.now() };
         setRoom(prevRoom => {
             const updatedRoom = { ...prevRoom, messages: [...prevRoom.messages, newMessage] };
-            localStorage.setItem("Room", JSON.stringify(updatedRoom));
+            storage.setItem("Room", JSON.stringify(updatedRoom));
             return updatedRoom;
         });
     };
@@ -107,15 +141,15 @@ export const RoomProvider = ({ children }) => {
                 scores: [0, 0, 0, 0],
             },
             roomName: '',
-            users: [],
+            users: {},
             messages: []
         });  // Reset state to initial values
-        localStorage.removeItem("Room");  // Clear from localStorage
+        storage.removeItem("Room");  // Clear from storage
     };
 
     return (
         <RoomContext.Provider
-            value={{ room, updateRoom, setRoomName, addUser, addMessage, clearRoom, removeUser, setScore, setTurn }}
+            value={{ room, updateRoom, setRoomName, addUser,setUsers, addMessage, clearRoom, removeUser, setScore, setTurn }}
         >
             {children}
         </RoomContext.Provider>

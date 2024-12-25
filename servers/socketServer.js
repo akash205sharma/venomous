@@ -3,30 +3,85 @@
 
 function socketServer(io) {
 
-    var first = 0;    //initializes to zero only on server restart.
+    const roomsTousers = {
+        // 'RoomName': ['user_1', 'user_2'],
+    };
+    const usersTorooms = {
+        // 'user_1': ['RoomName', 1, 'user_name'],
+    };
+
+    const addUsersToMap = ([roomName, userId, user_name]) => {
+        let usersInroom = roomsTousers[roomName] || [];
+        const numberOfUser = usersInroom.length;
+        if (!usersInroom.includes(userId)) {
+            usersInroom.push(userId);
+            roomsTousers[roomName] = usersInroom;
+        }
+        if(!usersTorooms[userId] || usersTorooms[userId][0]!=roomName) usersTorooms[userId] = [roomName, user_name];
+        console.log("roomsTousers", roomsTousers)
+        console.log("usersTorooms", usersTorooms)
+    }
+
+    const removeUserFromMap = ([roomName, userId]) => {
+        delete usersTorooms[userId];
+        roomsTousers[roomName]?.pop(userId);
+        if (roomsTousers[roomName]?.length === 0) { delete roomsTousers[roomName]; }
+        console.log("roomsTousers", roomsTousers)
+        console.log("usersTorooms", usersTorooms)
+    }
+
+    const removeDeadSocketFromMap = (userId) => {
+        (usersTorooms[userId]?.forEach(room => {
+            roomsTousers[room]?.pop(userId);
+            if (roomsTousers[room]?.length === 0) delete roomsTousers[room];
+        }))
+        delete usersTorooms[userId];
+        console.log("roomsTousers", roomsTousers)
+        console.log("usersTorooms", usersTorooms)
+    }
+
+    const sendUserUpdates = ({roomName,userId}) => {
+        const room = roomsTousers[roomName] || [];
+        let users = {};
+        (room?.forEach(user => {
+            users[user] = usersTorooms[user];
+        }))
+        io.sockets.to(roomName).emit('socket_joined', { userId, users });
+        console.log("data after someone joines or leaves", userId, users);
+    }
 
     io.on('connection', (socket) => {      // runs every time on client reload
 
-        const userId = socket.handshake.query.userId;
+        const userId = socket.handshake.query.userId
 
         console.log(`User connected: ${userId} (Socket ID: ${socket.id})`);
 
         // Join a room
-        socket.on('join_room', (roomName) => {
-            socket.join(roomName);
-            console.log(`User ${userId} joined room ${roomName}`);
+        socket.on('join_room', ({ roomName, user_name }) => {
+            if (roomName) {
+                socket.join(roomName);
+                addUsersToMap([roomName, userId, user_name]);
+                console.log(`User ${userId} joined room ${roomName}`);
+
+                //send updates on join
+                sendUserUpdates({roomName,userId})
+            }
         });
 
-        socket.off('join_room', (roomName) => {
-            socket.leave(roomName);
-            console.log(`User ${socket.id} left room ${roomName}`);
-        });
+        // socket.off('join_room', ({ roomName}) => {
+        //     removeUserFromMap([roomName, userId])
+        //     socket.leave(roomName);
+        //     console.log(`User ${socket.id} left room ${roomName}`);
+        // });
 
 
         // Leave a room
         socket.on('leave_room', (roomName) => {
+            removeUserFromMap([roomName, userId])
             socket.leave(roomName);
             console.log(`User ${socket.id} left room ${roomName}`);
+            //send updates on join
+            sendUserUpdates({roomName,userId})
         });
 
 
@@ -34,10 +89,10 @@ function socketServer(io) {
         socket.on('send_message', ({ roomName, message }) => {
             console.log(`User ${userId} attempting to send message to room ${roomName}`);
             console.log(socket.id, userId, ":", message)
+            // io.emit('receive_message', { message, sender: userId });
+            // socket.broadcast.to(roomName).emit('receive_room', { room, sender: userId });
             io.sockets.to(roomName).emit('receive_message', { message, sender: userId });
         })
-
-
 
         //send game room  data
         socket.on('send_room', (room) => {
@@ -47,11 +102,20 @@ function socketServer(io) {
             // io.sockets.to(room.roomName).emit('receive_room', { room, sender: userId });
         })
 
-
-        socket.off("setup", () => {
+        //destroy socket when tab closed
+        socket.on("disconnect", () => {
             console.log("USER DISCONNECTED");
             socket.leave(userId);
-        });
+            removeDeadSocketFromMap(userId)
+        })
+
+        // socket.off("setup", () => {
+        //     console.log("USER DISCONNECTED");
+        //     socket.leave(userId);
+        //     removeDeadSocketFromMap(userId)
+        // });
+
+
 
 
         // video call logic
@@ -77,13 +141,6 @@ function socketServer(io) {
             console.log("peer_nego_done", ans)
 
             socket.broadcast.to(to).emit('peer_nego_final', { from: userId, ans });
-        })
-
-        // var first = 0;    //initializes to zero on client reload means soclet connection
-        socket.on("changeFirst", () => {
-            first++;
-            console.log("first", first);
-            socket.emit("updatedFirst", { newFirst: first });
         })
 
     });

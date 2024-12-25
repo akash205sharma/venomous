@@ -13,7 +13,17 @@ Architecture
     2. joinroom in useEffect,
     3. Array for positions.
     4. For dice logic , amp for position(x,y) to score.
-
+    room: {
+        game: {
+            turn: 0,
+            scores: [0, 0, 0, 0],
+        },
+        roomName: '',
+        users: {
+            user_2: { user_name: "JaneDoe", id: 2 }
+        },
+        messages: []
+    }
 
 DICE LOGIC{
     kiski baari hai state = turn ;
@@ -37,6 +47,7 @@ Challenges I faced
     4. Double click on dice{
         is clickable state and isrolling state;
     }
+    5. sockey again and again conneccting with new ids so implemented sessionStorage based userid to make that session stable  
     
 
     

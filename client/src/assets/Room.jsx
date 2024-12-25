@@ -5,7 +5,11 @@ import { useRoom } from '../context/RoomContext';
 import { useCallback } from 'react';
 import ReactPlayer from 'react-player'
 import peer from '../services/peer';
+import Chatbox from './Chatbox';
 
+
+const storage = sessionStorage   //a tab a user
+// const storage = localStorage   // different tabs same user
 
 // const socket = io('http://localhost:4000');
 
@@ -13,11 +17,11 @@ import peer from '../services/peer';
 
 // const socket = io('http://localhost:4000')
 
-let userId = localStorage.getItem('userId');
+let userId = storage.getItem('userId');
 if (!userId) {
 	userId = `user_${Date.now()}`; // or use any unique ID logic
 	// userId = socket.id; // or use any unique ID logic
-	localStorage.setItem('userId', userId);
+	storage.setItem('userId', userId);
 }
 
 const socket = io('http://localhost:4000', {
@@ -36,6 +40,7 @@ function Room() {
 
 	const { room, updateRoom, setScore, setTurn, setRoomName, addUser, addMessage, clearRoom, removeUser } = useRoom();
 	const [message, setMessage] = useState("")
+	const user_name = room.users[userId]?.user_name;
 	const navigate = useNavigate();
 
 
@@ -54,12 +59,13 @@ function Room() {
 	}
 
 
-
 	useEffect(() => {
 
-		joinRoom(room.roomName);    /******** Very imp for Now ********/
+		joinRoom({ roomName: room.roomName, user_name });    /******** Very imp for Now ********/
 
-	}, [room.roomName])
+	}, [room.roomName, user_name])
+
+
 
 	// update if one user leaveRoom///????
 
@@ -80,7 +86,7 @@ function Room() {
 	useEffect(() => {
 		if (room.roomName != "")      // as on refresh the room was becoming empty for a second before loading from loacalstorage and at that time it was sending that empty room
 			sendRoom();
-		
+
 	}, [room.game.turn])
 
 
@@ -101,13 +107,14 @@ function Room() {
 	}, [socket]);
 
 
+
 	// Send a message to a specific room
 	const sendMessageToRoom = (e) => {
 		e.preventDefault();
 		const roomName = room.roomName;
-		const users = room.users;
+		// const users = room.users;
 		// joinRoom(roomName);
-		socket.emit('send_message', { roomName, message, users });
+		socket.emit('send_message', { roomName, message });
 		setMessage('');
 		// console.log('Rooms the svocket is part of:', socket.room);
 	};
@@ -192,7 +199,7 @@ function Room() {
 
 
 
-	
+
 
 	//{    // Video call logic
 
@@ -268,7 +275,7 @@ function Room() {
 			setRemoteStream(remoteStream[0]);
 
 			// console.log("remoteStream",remoteStream[0])
-			
+
 		})
 
 	}, []);
@@ -292,26 +299,17 @@ function Room() {
 
 
 
-	console.log("myStream", myStream)
-	console.log("remoteStream", remoteStream)
+	// console.log("myStream", myStream)
+	// console.log("remoteStream", remoteStream)
 
 
 
 	return (
 		<>
-			<div className='z-[-20] bg-[url(bg.avif)] bg-cover bg-center bg h-[200vh]'>
-
-				{/* score card */}
-				<div className='flex fixed top-0 right-[70vw] bg-white z-50'>
-					<div className='border p-2 font-bold '>{scores[0]}</div>
-					<div className='border p-2 font-bold '>{scores[1]}</div>
-					<div className='border p-2 font-bold '>{scores[2]}</div>
-					<div className='border p-2 font-bold '>{scores[3]}</div>
-				</div>
+			<div className='z-[-20] bg-[url(bg.avif)] bg-cover h-[200vh] bg-center'>
 
 
-
-				<button onClick={handleLeave} className='z-40 cursor-pointer fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {room.roomName} </button>
+				<button onClick={handleLeave} className='z-40 py-3 px-6 hover:bg-red-600 transition duration-300 fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {room.roomName} </button>
 
 				{/* snake and ladder */}
 
@@ -363,36 +361,13 @@ function Room() {
 
 				{/* Chatbox */}
 
-				<div className='absolute right-0 top-0 bg-[#001455] h-screen w-[27vw] '>
 
-					<div className='h-[86vh] overflow-y-scroll' >
-						<div className='text-white' >
-							<h2>Messages:</h2>
-							{room.messages.map((msg, index) => (
-								<div className='my-3' key={index}>
-									<div className='flex' ><img width={25} src="avatar1.png" alt="" />{msg.user}</div>
-									<div className='mx-7'>{msg.message}</div>
-								</div>
-							))}
-						</div>
-					</div>
-
-
-					<div className='w-[25vw] ml-1'>
-
-						<form className='h-0 m-0 p-0' onSubmit={sendMessageToRoom}>
-							<input
-								className=' rounded-lg p-3 w-[25vw] outline-none'
-								type="text"
-								name='msg'
-								value={message}
-								onChange={(e) => setMessage(e.target.value)}
-								placeholder="Enter message"
-							/>
-							<button type='submit' name='msg' className='relative bottom-12 left-[22vw] bg-green-500 p-3 rounded-e-lg text-white '>Send</button>
-						</form>
-					</div>
-				</div>
+				<Chatbox
+					room={room}
+					sendMessageToRoom={sendMessageToRoom}
+					setMessage={setMessage}
+					message={message}
+				/>
 
 
 
@@ -402,13 +377,31 @@ function Room() {
 					{myStream && <button onClick={sendStreams} className='text-white bg-green-500 rounded m-4 px-5 py-2'>Send video</button>}
 				</div>
 				<h1>MY Video</h1>
+				{myStream && <ReactPlayer playing height={300} width={300} url={myStream} />}
 				<h1>Friend Video</h1>
-				{remoteStream && <ReactPlayer playing  height={300} width={300} url={remoteStream} /> }
-				{myStream && <ReactPlayer playing  height={300} width={300} url={myStream} />}
+				{remoteStream && <ReactPlayer playing height={300} width={300} url={remoteStream} />} 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 			</div>
-
-
 		</>
+
+
 	)
 }
 
