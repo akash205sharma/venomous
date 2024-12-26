@@ -326,7 +326,7 @@ function Room() {
 				{/* avatars */}
 
 
-				<div className='flex flex-col ml-9  gap-10 h-screen w-[20vw]'>
+				{/* <div className='flex flex-col ml-9  gap-10 h-screen w-[20vw]'>
 
 					<div className='flex relative gap-2 items-center ' >
 						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar1.png" alt="" /></div> Srishti </div>
@@ -356,7 +356,60 @@ function Room() {
 						{(turn == 3) && <div onClick={isclickable ? diceMove : null} className=' h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={isrolling ? "rollingDice.gif" : `${dicefaces[Dice[3] - 1]}.png`} /></div>}
 						{(turn != 3) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[3] - 1]}.png`} /></div>}
 					</div>
+				</div> */}
+
+
+
+
+
+				{/* avatars */}
+
+
+				<div className='flex flex-col ml-9 gap-10 h-screen w-[20vw]'>
+					{Object.keys(room.users).slice(0, 4).map((eachUserId, index) => {
+						const user = room.users[eachUserId];
+						const avatarSrc = `avatar${index + 1}.png`; // Dynamically select avatars based on index
+						const diceFace = `${dicefaces[Dice[index] - 1]}.png`;
+
+						return (
+							<div key={eachUserId} className='flex relative gap-2 items-center'>
+								{/* User Information */}
+								<div className='text-center text-white font-extrabold text-xl'>
+									<div className='border-4 bg-blue-500 rounded-full p-2'>
+										<img width={100} src={avatarSrc} alt={`${user.user_name}'s avatar`} />
+									</div>
+									{user.user_name}
+								</div>
+
+								{/* Dice */}
+								{turn === index ? (
+									<div
+										onClick={userId === eachUserId && isclickable ? diceMove : null}
+										className={`h-[60px] w-[60px] rounded-lg bg-white ${userId === eachUserId ? 'border-green-600' : 'border-red-700'
+											} border-4`}>
+										<img src={isrolling ? "rollingDice.gif" : diceFace} />
+									</div>
+								) : (
+									<div className='h-[60px] w-[60px] rounded-lg bg-white border-white border-4'>
+										<img src={diceFace} />
+									</div>
+								)}
+							</div>
+						);
+					})}
 				</div>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 				{/* Chatbox */}
@@ -377,12 +430,9 @@ function Room() {
 					{myStream && <button onClick={sendStreams} className='text-white bg-green-500 rounded m-4 px-5 py-2'>Send video</button>}
 				</div>
 				<h1>MY Video</h1>
-				{myStream && <ReactPlayer playing height={300} width={300} url={myStream} />}
+				{myStream && <ReactPlayer className="border border-y-black" playing height={300} width={300} url={myStream} />}
 				<h1>Friend Video</h1>
-				{remoteStream && <ReactPlayer playing height={300} width={300} url={remoteStream} />} 
-
-
-
+				{remoteStream && <ReactPlayer className="border border-y-black" playing height={300} width={300} url={remoteStream} />}
 
 
 
