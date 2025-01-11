@@ -24,6 +24,7 @@ if (!userId) {
 	storage.setItem('userId', userId);
 }
 
+// const socket = io('http://192.168.152.46:4000', {
 const socket = io('http://localhost:4000', {
 	query: { userId }  // send userId to the server
 });
@@ -130,13 +131,7 @@ function Room() {
 
 
 	const dicefaces = ["one", "two", "three", "four", "five", "six"];
-	const [Dice, setDice] = useState([1, 1, 1, 1]);
-	const changeDiceValue = (value, turn) => {
-		// let newDiceValues = Dice;        // **dont write bcz  Direct Mutation, State Not Triggering Re-render : Since the reference to the array doesn't change**
-		let newDiceValues = [...Dice];
-		newDiceValues[turn] = value;
-		setDice(newDiceValues);
-	}
+	const [Dice, setDice] = useState(1);
 
 
 	const Grid = [
@@ -154,17 +149,15 @@ function Room() {
 	]
 	const scores = room.game.scores
 	const turn = room.game.turn
-	const [isclickable, setIsclickable] = useState(1);
 	const [isrolling, setIsrolling] = useState(0);
 
 	const diceMove = (e) => {
 		setIsrolling(1);
-		setIsclickable(0)
 		setTimeout(() => {
 			const Dicevalue = Math.floor(1 + Math.random() * 6);
 			// const Dicevalue = 1;
 			setIsrolling(0)
-			changeDiceValue(Dicevalue, turn);
+			setDice(Dicevalue);
 			//Dice rolling
 			let myscore = Dicevalue + scores[turn];
 			if (myscore <= 99) {
@@ -178,22 +171,19 @@ function Room() {
 							setScore(updatedscore, turn);
 						}
 					}
-					if (turn < 3) setTurn(turn + 1);
+					if (turn < Object.keys(room.users).length - 1) setTurn(turn + 1);
 					else setTurn(0);
-					setIsclickable(1)
 					console.log(turn)
 
 				}, 1700);
 			}
 			else {
-				if (turn < 3) setTurn(turn + 1);
+				if (turn < Object.keys(room.users).length - 1) setTurn(turn + 1);
 				else setTurn(0);
-				setIsclickable(1)
 				console.log(turn)
 			}
 
 		}, 1200);
-
 
 	}
 
@@ -203,110 +193,111 @@ function Room() {
 
 	//{    // Video call logic
 
-	const [myStream, setMyStream] = useState()
-	const [remoteStream, setRemoteStream] = useState()
+	// const [myStream, setMyStream] = useState()
+	// const [remoteStream, setRemoteStream] = useState()
 
-	const handleCall = useCallback(async () => {
-		const stream = await navigator.mediaDevices.getUserMedia({
-			audio: true,
-			video: true
-		});
-		const offer = await peer.getOffer();
-		socket.emit("forward_call", { to: room.roomName, offer });
-		setMyStream(stream)
-		console.log("Call Forwarding started");
+	// const handleCall = useCallback(async () => {
+	// 	const stream = await navigator.mediaDevices.getUserMedia({
+	// 		audio: true,
+	// 		video: true
+	// 	});
+	// 	const offer = await peer.getOffer();
+	// 	socket.emit("forward_call", { to: room.roomName, offer });
+	// 	setMyStream(stream)
+	// 	console.log("Call Forwarding started");
 
-	}, [room.roomName, socket]);
-
-
-	const handleIncommingCall = useCallback(async ({ from, offer }) => {
-		console.log("incomming_call", from, offer);
-
-		const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-		setMyStream(stream)
-
-		const ans = await peer.getAnswer(offer)
-		socket.emit('call_accepted', { to: room.roomName, ans });
-
-	}, [socket]);
-
-	const sendStreams = useCallback(() => {
-		for (const track of myStream.getTracks()) {
-			peer.peer.addTrack(track, myStream);
-		}
-	}, [myStream]);
-
-	const handleCallAccepted = useCallback(({ from, ans }) => {
-		peer.setLocalDescription(ans)   // await added by myself
-		console.log("Call Accepted");
-		sendStreams();
-	}, [sendStreams]);
-
-	const handleNegoNeeded = useCallback(async () => {
-		const offer = await peer.getOffer();
-		socket.emit('peer_nego_needed', { offer, to: room.roomName });
-
-	}, [room.roomName, socket]);   //???????????????????
-
-	const handleNegoNeedIncomming = useCallback(async ({ from, offer }) => {
-		const ans = await peer.getAnswer(offer);
-		socket.emit('peer_nego_done', { to: from, ans })
-	}, [socket])
-
-	const handleNegoNeedFinal = useCallback(async ({ ans }) => {
-		await peer.setLocalDescription(ans)
-	}, []);
+	// }, [room.roomName, socket]);
 
 
-	useEffect(() => {
-		peer.peer.addEventListener('negotiationneeded', handleNegoNeeded);
+	// const handleIncommingCall = useCallback(async ({ from, offer }) => {
+	// 	console.log("incomming_call", from, offer);
 
-		return () => {
-			peer.peer.removeEventListener('negotiationneeded', handleNegoNeeded);
-		}
-	}, [handleNegoNeeded])
+	// 	const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+	// 	setMyStream(stream)
+
+	// 	const ans = await peer.getAnswer(offer)
+	// 	socket.emit('call_accepted', { to: room.roomName, ans });
+
+	// }, [socket]);
+
+	// const sendStreams = useCallback(() => {
+	// 	for (const track of myStream.getTracks()) {
+	// 		peer.peer.addTrack(track, myStream);
+	// 	}
+	// }, [myStream]);
+
+	// const handleCallAccepted = useCallback(({ from, ans }) => {
+	// 	peer.setLocalDescription(ans)   // await added by myself
+	// 	console.log("Call Accepted");
+	// 	sendStreams();
+	// }, [sendStreams]);
+
+	// const handleNegoNeeded = useCallback(async () => {
+	// 	const offer = await peer.getOffer();
+	// 	socket.emit('peer_nego_needed', { offer, to: room.roomName });
+
+	// }, [room.roomName, socket]);   //???????????????????
+
+	// const handleNegoNeedIncomming = useCallback(async ({ from, offer }) => {
+	// 	const ans = await peer.getAnswer(offer);
+	// 	socket.emit('peer_nego_done', { to: from, ans })
+	// }, [socket])
+
+	// const handleNegoNeedFinal = useCallback(async ({ ans }) => {
+	// 	await peer.setLocalDescription(ans)
+	// }, []);
 
 
-	useEffect(() => {
-		peer.peer.addEventListener('track', async (ev) => {
-			const remoteStream = ev.streams;
-			// console.log('got tracks', remoteStream)
+	// useEffect(() => {
+	// 	peer.peer.addEventListener('negotiationneeded', handleNegoNeeded);
 
-			setRemoteStream(remoteStream[0]);
-
-			// console.log("remoteStream",remoteStream[0])
-
-		})
-
-	}, []);
+	// 	return () => {
+	// 		peer.peer.removeEventListener('negotiationneeded', handleNegoNeeded);
+	// 	}
+	// }, [handleNegoNeeded])
 
 
+	// useEffect(() => {
+	// 	peer.peer.addEventListener('track', async (ev) => {
+	// 		const remoteStream = ev.streams;
+	// 		// console.log('got tracks', remoteStream)
 
-	useEffect(() => {
-		socket.on('incomming_call', handleIncommingCall)
-		socket.on('call_accepted', handleCallAccepted)
-		socket.on('peer_nego_needed', handleNegoNeedIncomming)
-		socket.on('peer_nego_final', handleNegoNeedFinal)
+	// 		setRemoteStream(remoteStream[0]);
 
-		return () => {
-			socket.off('incomming_call', handleIncommingCall)
-			socket.off('call_accepted', handleCallAccepted)
-			socket.off('peer_nego_needed', handleNegoNeedIncomming)
-			socket.off('peer_nego_final', handleNegoNeedFinal)
+	// 		// console.log("remoteStream",remoteStream[0])
 
-		}
-	}, [socket, handleIncommingCall, handleCallAccepted, handleNegoNeedIncomming, handleNegoNeedFinal]);
+	// 	})
+
+	// }, []);
+
+
+
+	// useEffect(() => {
+	// 	socket.on('incomming_call', handleIncommingCall)
+	// 	socket.on('call_accepted', handleCallAccepted)
+	// 	socket.on('peer_nego_needed', handleNegoNeedIncomming)
+	// 	socket.on('peer_nego_final', handleNegoNeedFinal)
+
+	// 	return () => {
+	// 		socket.off('incomming_call', handleIncommingCall)
+	// 		socket.off('call_accepted', handleCallAccepted)
+	// 		socket.off('peer_nego_needed', handleNegoNeedIncomming)
+	// 		socket.off('peer_nego_final', handleNegoNeedFinal)
+
+	// 	}
+	// }, [socket, handleIncommingCall, handleCallAccepted, handleNegoNeedIncomming, handleNegoNeedFinal]);
 
 
 
 	// console.log("myStream", myStream)
 	// console.log("remoteStream", remoteStream)
 
+	// console.log(turn)
 
 
 	return (
 		<>
-			<div className='z-[-20] bg-[url(bg.avif)] bg-cover h-[200vh] bg-center'>
+			<div className='z-[-20] bg-[url(bg.avif)] bg-cover h-[100vh] bg-center overflow-y-scroll'>
 
 
 				<button onClick={handleLeave} className='z-40 py-3 px-6 hover:bg-red-600 transition duration-300 fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {room.roomName} </button>
@@ -323,93 +314,52 @@ function Room() {
 				</div>
 
 
-				{/* avatars */}
-
-
-				{/* <div className='flex flex-col ml-9  gap-10 h-screen w-[20vw]'>
-
-					<div className='flex relative gap-2 items-center ' >
-						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar1.png" alt="" /></div> Srishti </div>
-						{(turn == 0) && <div onClick={isclickable ? diceMove : null} className='h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={isrolling ? "rollingDice.gif" : `${dicefaces[Dice[0] - 1]}.png`} /></div>}
-						{(turn != 0) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[0] - 1]}.png`} /></div>}
-					</div>
-
-
-
-					<div className='flex relative gap-2 items-center ' >
-						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar2.png" alt="" /></div> Rishav </div>
-
-						{(turn == 1) && <div onClick={isclickable ? diceMove : null} className=' h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={isrolling ? "rollingDice.gif" : `${dicefaces[Dice[1] - 1]}.png`} /></div>}
-						{(turn != 1) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[1] - 1]}.png`} /></div>}
-					</div>
-
-
-					<div className='flex relative gap-2 items-center ' >
-						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar3.png" alt="" /></div> Raghav </div>
-						{(turn == 2) && <div onClick={isclickable ? diceMove : null} className=' h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={isrolling ? "rollingDice.gif" : `${dicefaces[Dice[2] - 1]}.png`} /></div>}
-						{(turn != 2) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[2] - 1]}.png`} /></div>}
-					</div>
-
-
-					<div className='flex relative gap-2 items-center ' >
-						<div className='text-center text-white font-extrabold text-xl' ><div className='border-4 bg-blue-500 rounded-full p-2' ><img width={100} src="avatar4.png" alt="" /></div> Sharadha </div>
-						{(turn == 3) && <div onClick={isclickable ? diceMove : null} className=' h-[60px] w-[60px] rounded-lg bg-white border-green-600 border-4 ' ><img src={isrolling ? "rollingDice.gif" : `${dicefaces[Dice[3] - 1]}.png`} /></div>}
-						{(turn != 3) && <div className='  h-[60px] w-[60px] rounded-lg bg-white border-white border-4 ' ><img src={`${dicefaces[Dice[3] - 1]}.png`} /></div>}
-					</div>
-				</div> */}
-
-
 
 
 
 				{/* avatars */}
 
 
-				<div className='flex flex-col ml-9 gap-10 h-screen w-[20vw]'>
-					{Object.keys(room.users).slice(0, 4).map((eachUserId, index) => {
-						const user = room.users[eachUserId];
-						const avatarSrc = `avatar${index + 1}.png`; // Dynamically select avatars based on index
-						const diceFace = `${dicefaces[Dice[index] - 1]}.png`;
+				<div className='flex flex-col h-screen w-[20vw] gap-10'>
+					{/* Other Users Section */}
+					<div className='flex flex-col gap-6'>
+						{Object.keys(room.users)
+							.filter((eachUserId) => eachUserId !== userId) // Exclude current user
+							.map((eachUserId, index) => {
+								const user = room.users[eachUserId];
+								const avatarSrc = `avatar${index + 1}.png`;
+								console.log(avatarSrc)
+								return (
+									<div key={eachUserId} className='flex items-center gap-2'>
+										<div className={`text-center text-white font-extrabold text-xl ${turn === Object.keys(room.users).indexOf(eachUserId) ? ' border-green-400 border-4 rounded-xl' : ''}  `}>
+											<div className={`border-4 bg-blue-500 rounded-full p-2 `}>
+												<img width={100} src={`avatar${Object.keys(room.users).indexOf(eachUserId) + 1}.png`} alt={`${user?.user_name}'s avatar`} />
+											</div>
+											{user.user_name}
+										</div>
+									</div>
+								);
+							})}
+					</div>
 
-						return (
-							<div key={eachUserId} className='flex relative gap-2 items-center'>
-								{/* User Information */}
-								<div className='text-center text-white font-extrabold text-xl'>
-									<div className='border-4 bg-blue-500 rounded-full p-2'>
-										<img width={100} src={avatarSrc} alt={`${user.user_name}'s avatar`} />
-									</div>
-									{user.user_name}
-								</div>
-
-								{/* Dice */}
-								{turn === index ? (
-									<div
-										onClick={userId === eachUserId && isclickable ? diceMove : null}
-										className={`h-[60px] w-[60px] rounded-lg bg-white ${userId === eachUserId ? 'border-green-600' : 'border-red-700'
-											} border-4`}>
-										<img src={isrolling ? "rollingDice.gif" : diceFace} />
-									</div>
-								) : (
-									<div className='h-[60px] w-[60px] rounded-lg bg-white border-white border-4'>
-										<img src={diceFace} />
-									</div>
-								)}
+					{/* Current User Section */}
+					<div className='mt-auto flex items-center justify-center gap-4'>
+						<div className={`text-center text-white font-extrabold text-xl  ${turn === Object.keys(room.users).indexOf(userId) ? 'border-green-400 border-4 rounded-xl' : ''} `}>
+							<div className={` border-4 bg-blue-500 rounded-full p-2 `}>
+								<img width={100} src={`avatar${Object.keys(room.users).indexOf(userId) + 1}.png`} alt='Your avatar' />
 							</div>
-						);
-					})}
+							{user_name}
+						</div>
+
+						{/* Dice */}
+						<div
+							onClick={turn === Object.keys(room.users).indexOf(userId) ? diceMove : null}
+							className={`h-[60px] w-[60px] rounded-lg bg-white ${turn === Object.keys(room.users).indexOf(userId) ? 'border-green-600 border-4 rounded-xl' : 'border-gray-400'
+								} border-4`}>
+							<img src={isrolling ? 'rollingDice.gif' : `${dicefaces[Dice-1]}.png`} />
+						</div>
+					</div>
 				</div>
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 				{/* Chatbox */}
@@ -420,34 +370,23 @@ function Room() {
 					sendMessageToRoom={sendMessageToRoom}
 					setMessage={setMessage}
 					message={message}
+					userId={userId}
 				/>
 
 
 
 				{/* Video Call */}
-				<div>
+				{/* <div className='absolute top-10 right-0 w-[20vw]'>
 					<button onClick={handleCall} className='text-white bg-green-500 rounded m-4 px-5 py-2'>Call</button>
 					{myStream && <button onClick={sendStreams} className='text-white bg-green-500 rounded m-4 px-5 py-2'>Send video</button>}
-				</div>
-				<h1>MY Video</h1>
-				{myStream && <ReactPlayer className="border border-y-black" playing height={300} width={300} url={myStream} />}
-				<h1>Friend Video</h1>
-				{remoteStream && <ReactPlayer className="border border-y-black" playing height={300} width={300} url={remoteStream} />}
+					<h1>MY Video</h1>
+					{myStream && <ReactPlayer className="border border-y-black" playing height={300} width={300} url={myStream} />}
+					<h1>Friend Video</h1>
+					{remoteStream && <ReactPlayer className="border border-y-black" playing height={300} width={300} url={remoteStream} />}
 
+				</div> */}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+				
 			</div>
 		</>
 

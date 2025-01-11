@@ -20,7 +20,8 @@ Architecture
         },
         roomName: '',
         users: {
-            user_2: { user_name: "JaneDoe", id: 2 }
+            user_1: { user_name: "akash"}
+            user_2: { user_name: "JaneDoe" }
         },
         messages: []
     }
@@ -57,3 +58,4 @@ Challenges I faced
 
 	}, [room.game.turn])
 
+    

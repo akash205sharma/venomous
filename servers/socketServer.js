@@ -1,7 +1,22 @@
-
 // var first = 0;  // initailizes to zero only on server restart.
 
+//offers will contain {}
+const offers = [
+    // offererUserName
+    // offer
+    // offerIceCandidates
+    // answererUserName
+    // answer
+    // answererIceCandidates
+];
+const connectedSockets = [
+    //username, socketId
+]
+
+
 function socketServer(io) {
+
+
 
     const roomsTousers = {
         // 'RoomName': ['user_1', 'user_2'],
@@ -17,7 +32,7 @@ function socketServer(io) {
             usersInroom.push(userId);
             roomsTousers[roomName] = usersInroom;
         }
-        if(!usersTorooms[userId] || usersTorooms[userId][0]!=roomName) usersTorooms[userId] = [roomName, user_name];
+        if (!usersTorooms[userId] || usersTorooms[userId][0] != roomName) usersTorooms[userId] = [roomName, user_name];
         console.log("roomsTousers", roomsTousers)
         console.log("usersTorooms", usersTorooms)
     }
@@ -40,7 +55,7 @@ function socketServer(io) {
         console.log("usersTorooms", usersTorooms)
     }
 
-    const sendUserUpdates = ({roomName,userId}) => {
+    const sendUserUpdates = ({ roomName, userId }) => {
         const room = roomsTousers[roomName] || [];
         let users = {};
         (room?.forEach(user => {
@@ -49,6 +64,8 @@ function socketServer(io) {
         io.sockets.to(roomName).emit('socket_joined', { userId, users });
         console.log("data after someone joines or leaves", userId, users);
     }
+
+
 
     io.on('connection', (socket) => {      // runs every time on client reload
 
@@ -65,6 +82,12 @@ function socketServer(io) {
 
                 //send updates on join
                 sendUserUpdates({roomName,userId})
+
+                //for sfu implementaton
+                // socket.to(roomName).emit('newPeer', userId);
+                // io.sockets.to(roomName).emit('user-joined', userId);
+
+
             }
         });
 
@@ -81,7 +104,7 @@ function socketServer(io) {
             socket.leave(roomName);
             console.log(`User ${socket.id} left room ${roomName}`);
             //send updates on join
-            sendUserUpdates({roomName,userId})
+            sendUserUpdates({ roomName, userId })
         });
 
 
@@ -107,6 +130,10 @@ function socketServer(io) {
             console.log("USER DISCONNECTED");
             socket.leave(userId);
             removeDeadSocketFromMap(userId)
+
+            //for sfu
+            // socket.to("Radha").emit('peerDisconnected', userId);
+            // socket.broadcast.emit('user-disconnected', userId);
         })
 
         // socket.off("setup", () => {
@@ -117,33 +144,11 @@ function socketServer(io) {
 
 
 
+        
 
-        // video call logic
-
-        socket.on('forward_call', ({ to, offer }) => {
-
-            socket.broadcast.to(to).emit('incomming_call', { from: userId, offer });
-
-        })
-        socket.on('call_accepted', ({ to, ans }) => {
-
-            socket.broadcast.to(to).emit('call_accepted', { from: userId, ans });
-
-        })
-        socket.on('peer_nego_needed', ({ to, offer }) => {
-
-            // console.log("peer_nego_needed",offer)
-
-            socket.broadcast.to(to).emit('peer_nego_needed', { from: userId, offer });
-        })
-        socket.on('peer_nego_done', ({ to, ans }) => {
-
-            console.log("peer_nego_done", ans)
-
-            socket.broadcast.to(to).emit('peer_nego_final', { from: userId, ans });
-        })
 
     });
+
 
 
 }

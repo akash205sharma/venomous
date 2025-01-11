@@ -18,41 +18,6 @@ const Chatbox = ({room,sendMessageToRoom,setMessage,message}) => {
 
             {/* Chatbox */}
 
-            {/* 
-            <div className='absolute right-0 top-0 bg-[#001455] h-screen w-[27vw] '>
-
-                <div className='h-[86vh] overflow-y-scroll' >
-                    <div className='text-white' >
-                        <h2>Messages:</h2>
-                        {room.messages.map((msg, index) => (
-                            <div className='my-3' key={index}>
-                                <div className='flex' ><img width={25} src="avatar1.png" alt="" />{msg.user}</div>
-                                <div className='mx-7'>{msg.message}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-
-                <div className='w-[25vw] ml-1'>
-
-                    <form className='h-0 m-0 p-0' onSubmit={sendMessageToRoom}>
-                        <input
-                            className=' rounded-lg p-3 w-[25vw] outline-none'
-                            type="text"
-                            name='msg'
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            placeholder="Enter message"
-                        />
-                        <button type='submit' name='msg' className='relative bottom-12 left-[22vw] bg-green-500 p-3 rounded-e-lg text-white '>Send</button>
-                    </form>
-                </div>
-            </div> */}
-
-
-
-
             {/* Chatbox Toggle Button */}
             <button
                 onClick={toggleChatbox}
@@ -71,10 +36,11 @@ const Chatbox = ({room,sendMessageToRoom,setMessage,message}) => {
                             {room.messages.map((msg, index) => (
                                 <div className="my-3" key={index}>
                                     <div className="flex items-center gap-2">
-                                        <img width={25} src="avatar1.png" alt="" />
-                                        <span className="font-semibold">{msg.user}</span>
+                                        {/* <img width={25} src="avatar1.png" alt="" /> */}
+                                        <img width={35} src={`avatar${Object.keys(room.users).indexOf(msg.user) + 1}.png`} alt="" />
+                                        <span className="font-semibold">{room.users[msg.user].user_name}</span>
                                     </div>
-                                    <div className="ml-6">{msg.message}</div>
+                                    <div className="ml-12">{msg.message}</div>
                                 </div>
                             ))}
                         </div>
@@ -105,3 +71,9 @@ const Chatbox = ({room,sendMessageToRoom,setMessage,message}) => {
 }
 
 export default Chatbox
+
+
+
+
+
+
