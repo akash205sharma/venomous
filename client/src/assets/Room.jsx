@@ -335,7 +335,7 @@ function Room() {
 											<div className={`border-4 bg-blue-500 rounded-full p-2 `}>
 												<img width={100} src={`avatar${Object.keys(room.users).indexOf(eachUserId) + 1}.png`} alt={`${user?.user_name}'s avatar`} />
 											</div>
-											{user.user_name}
+											{user?.user_name}
 										</div>
 									</div>
 								);
@@ -376,7 +376,7 @@ function Room() {
 
 
 				{/* Video Call */}
-				{/* <div className='absolute top-10 right-0 w-[20vw]'>
+				{ <div className='absolute top-10 right-0 w-[20vw]'>
 					<button onClick={handleCall} className='text-white bg-green-500 rounded m-4 px-5 py-2'>Call</button>
 					{myStream && <button onClick={sendStreams} className='text-white bg-green-500 rounded m-4 px-5 py-2'>Send video</button>}
 					<h1>MY Video</h1>
@@ -384,7 +384,7 @@ function Room() {
 					<h1>Friend Video</h1>
 					{remoteStream && <ReactPlayer className="border border-y-black" playing height={300} width={300} url={remoteStream} />}
 
-				</div> */}
+				</div> }
 
 				
 			</div>

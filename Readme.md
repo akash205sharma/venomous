@@ -59,3 +59,74 @@ Challenges I faced
 	}, [room.game.turn])
 
     
+
+
+1. welcome -> setLocalUUID(userId)
+
+2. startstream()
+        createPeer()
+            socket.emit('ice')
+            socket.emit('peerconnect')
+ //server//      handleTrackEvent()
+                    broadcast.emit('newProducer')
+                socket.emit('answer')
+        consumeAll() -> socket.emit('getPeers')
+
+
+//client//{
+    socket.on('newProducer', handleNewProducer)
+        consume()
+            handleConsumerIceCandidate
+                socket.emit('consumer_ice')
+            socket.emit('consume')
+
+    socket.on('answer', handleAnswer)
+}
+
+
+
+//server{
+    socket.on('consumer_ice')
+
+    socket.on('consume')
+        createPeer()
+        socket.emit('consume')
+
+    socket.on('getPeers')
+        socket.emit('peers', peers)
+}
+
+//client//{
+    socket.on('consume', handleConsume);
+    socket.on('peers', handlePeers)
+        consume(peer)
+            socket.emit('consume')
+}
+
+//server//{
+    
+}
+
+
+
+
+
+
+
+
+
+
+implementation
+client:ice      //
+client :peerconnect  //
+client: getPeers  //
+client:consume   //
+client:consume_ice   //
+
+
+server:answer  //
+server:peers   //
+server:consume //
+
+
+

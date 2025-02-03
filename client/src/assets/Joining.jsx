@@ -156,6 +156,8 @@ const Joining = () => {
                 <button onClick={handleVideo} className="bg-green-500 text-white py-3 px-6 rounded-lg font-bold hover:bg-green-600 transition duration-300" >VIDEO  </button>
 
             </div>
+
+
         </div>
 
     )

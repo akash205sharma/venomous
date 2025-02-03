@@ -1,26 +1,44 @@
+'use strict'
+const webrtc= require('wrtc');
 // var first = 0;  // initailizes to zero only on server restart.
-
-//offers will contain {}
-const offers = [
-    // offererUserName
-    // offer
-    // offerIceCandidates
-    // answererUserName
-    // answer
-    // answererIceCandidates
-];
-const connectedSockets = [
-    //username, socketId
-]
 
 
 function socketServer(io) {
 
 
+    //////////////////////////////////////////  SFU  //////////////////////////////////////////
+
+    let peers = new Map();
+    let consumers = new Map();
+
+
+    function handleTrackEvent(e, peer, socket, userId) {
+        if (e.streams && e.streams[0]) {
+            peers.get(peer).stream = e.streams[0];
+            const room = usersTorooms[userId]?.[0];
+            socket.to(room).emit('newProducer', { 
+                id: peer, 
+                username: peers.get(peer).username 
+            });
+        }
+    }
+
+    function createPeer() {
+        return new webrtc.RTCPeerConnection({
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' }
+            ]
+        });
+    }
+
+
+    //////////////////////////////////////////  socket.io  //////////////////////////////////////////
+
 
     const roomsTousers = {
         // 'RoomName': ['user_1', 'user_2'],
     };
+
     const usersTorooms = {
         // 'user_1': ['RoomName', 1, 'user_name'],
     };
@@ -85,7 +103,7 @@ function socketServer(io) {
 
                 //for sfu implementaton
                 // socket.to(roomName).emit('newPeer', userId);
-                // io.sockets.to(roomName).emit('user-joined', userId);
+                io.sockets.to(roomName).emit('user-joined', userId);
 
 
             }
@@ -133,7 +151,7 @@ function socketServer(io) {
 
             //for sfu
             // socket.to("Radha").emit('peerDisconnected', userId);
-            // socket.broadcast.emit('user-disconnected', userId);
+            socket.broadcast.emit('user-disconnected', userId);
         })
 
         // socket.off("setup", () => {
@@ -144,45 +162,156 @@ function socketServer(io) {
 
 
 
-        
 
+        //////////////////////////////////////////  SFU  //////////////////////////////////////////
+
+
+
+
+
+
+
+        // io.on('connection', function (socket) {
+        // let userId = uuidv4();
+        socket.on('close', (event) => {
+            peers.delete(userId);
+            consumers.delete(userId);
+
+            io.broadcast(JSON.stringify({
+                type: 'user_left',
+                id: userId
+            }));
+        });
+
+
+
+        // socket.send(JSON.stringify({ 'type': 'welcome', id: userId }));
+        socket.emit('welcome', {userId});
+
+        socket.on('peerconnect', async (body) => {
+
+            peers.set(body.uqid, { socket: socket });
+            const peer = createPeer();
+            peers.get(body.uqid).username = body.username;
+            peers.get(body.uqid).peer = peer;
+            peer.ontrack = (e) => { handleTrackEvent(e, body.uqid, socket,userId) };
+            const desc = new webrtc.RTCSessionDescription(body.sdp);
+            await peer.setRemoteDescription(desc);
+            const answer = await peer.createAnswer();
+            await peer.setLocalDescription(answer);
+
+            const sdp = peer.localDescription
+            // const payload = {
+            //     type: 'answer',
+            // }
+
+            socket.emit('answer', {sdp});
+            // io.sockets.to(body.roomName).emit('answer', {sdp, id:body.uqid, username:body.username});
+
+          
+        })
+
+        socket.on('getPeers', (body) => {
+            let uuid = body.uqid;
+            const list = [];
+            peers.forEach((peer, key) => {
+                if (key != uuid) {
+                    const peerInfo = {
+                        id: key,
+                        username: peer.username,
+                    }
+                    list.push(peerInfo);
+                }
+            });
+
+
+            list.forEach((peer) => {
+                console.log('peers', peer);
+            });
+            // const peersPayload = {
+            //     type: 'peers',
+            //     peers: list
+            // }
+
+            // io.sockets.to(body.roomName).emit('peers',{ peers:list});
+            socket.emit('peers', { peers:list} );
+            
+        });
+
+        socket.on('ice', (body) => {
+            const user = peers.get(body.uqid);
+            if (user?.peer)
+                user?.peer?.addIceCandidate(new webrtc.RTCIceCandidate(body.ice)).catch(e => console.log(e));
+
+        });
+        
+        
+        socket.on('consume', async (body) => {
+            try {
+                // console.log(body);
+                
+                let { id, sdp, consumerId } = body;
+                const remoteUser = peers.get(id);
+                const newPeer = createPeer();
+                consumers.set(consumerId, newPeer);
+                const _desc = new webrtc.RTCSessionDescription(sdp);
+                await consumers.get(consumerId).setRemoteDescription(_desc);
+
+                remoteUser.stream.getTracks().forEach(track => {
+                    consumers.get(consumerId).addTrack(track, remoteUser.stream);
+                });
+                const _answer = await consumers.get(consumerId).createAnswer();
+                await consumers.get(consumerId).setLocalDescription(_answer);
+
+                const payload = {
+                    type: 'consume',
+                    sdp: consumers.get(consumerId).localDescription,
+                    username: remoteUser.username,
+                    id,
+                    consumerId
+                }
+
+                socket.emit('consume', payload);         //
+            } catch (error) {
+                console.log(error)
+            }
+        });
+
+        socket.on('consumer_ice', (body) => {
+            if (consumers.has(body.consumerId)) {
+                consumers.get(body.consumerId).addIceCandidate(new webrtc.RTCIceCandidate(body.ice)).catch(e => console.log(e));
+            }
+        });
+
+        socket.on('message', function (message) {
+            io.broadcast(message);
+        });
 
     });
+
+
+
+
+
+    io.broadcast = function (data) {
+        peers.forEach(function (peer) {
+            if (peer.socket.readyState === WebSocket.OPEN) {
+                peer.socket.send(data);
+            }
+        });
+    };
+
+    console.log('Server running.');
 
 
 
 }
 
+
+
+
+
 module.exports = socketServer;
-
-
-
-
-
-
-
-/*    socket without room
- 
-    io.on('connection', (socket) => {
-        console.log('A user connected:', socket.id);
- 
-        // Listen for data from the client
-        socket.on('send_data', (data) => {
-            // console.log('Data received:', data);
-            // Emit data back to all connected clients
-            io.emit('receive_data', data);
-        });
- 
- 
-        // Disconnect
- 
-        // socket.on('disconnect', () => {
-        //     console.log('User disconnected:', socket.id);
-        // });
- 
- 
-    });
-*/
 
 
 
