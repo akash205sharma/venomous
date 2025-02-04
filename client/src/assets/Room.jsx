@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
 import { useCallback } from 'react';
 import ReactPlayer from 'react-player'
-import peer from '../services/peer';
 import Chatbox from './Chatbox';
+import { useStreams } from '../context/StreamsContext';
 
 
 const storage = sessionStorage   //a tab a user
@@ -40,6 +40,7 @@ const socket = io('http://localhost:4000', {
 function Room() {
 
 	const { room, updateRoom, setScore, setTurn, setRoomName, addUser, addMessage, clearRoom, removeUser } = useRoom();
+	const { streams, addLocalStream, addRemoteStream } = useStreams();
 	const [message, setMessage] = useState("")
 	const user_name = room.users[userId]?.user_name;
 	const navigate = useNavigate();
@@ -188,111 +189,11 @@ function Room() {
 	}
 
 
-
-
-
-	//{    // Video call logic
-
-	// const [myStream, setMyStream] = useState()
-	// const [remoteStream, setRemoteStream] = useState()
-
-	// const handleCall = useCallback(async () => {
-	// 	const stream = await navigator.mediaDevices.getUserMedia({
-	// 		audio: true,
-	// 		video: true
-	// 	});
-	// 	const offer = await peer.getOffer();
-	// 	socket.emit("forward_call", { to: room.roomName, offer });
-	// 	setMyStream(stream)
-	// 	console.log("Call Forwarding started");
-
-	// }, [room.roomName, socket]);
-
-
-	// const handleIncommingCall = useCallback(async ({ from, offer }) => {
-	// 	console.log("incomming_call", from, offer);
-
-	// 	const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-	// 	setMyStream(stream)
-
-	// 	const ans = await peer.getAnswer(offer)
-	// 	socket.emit('call_accepted', { to: room.roomName, ans });
-
-	// }, [socket]);
-
-	// const sendStreams = useCallback(() => {
-	// 	for (const track of myStream.getTracks()) {
-	// 		peer.peer.addTrack(track, myStream);
-	// 	}
-	// }, [myStream]);
-
-	// const handleCallAccepted = useCallback(({ from, ans }) => {
-	// 	peer.setLocalDescription(ans)   // await added by myself
-	// 	console.log("Call Accepted");
-	// 	sendStreams();
-	// }, [sendStreams]);
-
-	// const handleNegoNeeded = useCallback(async () => {
-	// 	const offer = await peer.getOffer();
-	// 	socket.emit('peer_nego_needed', { offer, to: room.roomName });
-
-	// }, [room.roomName, socket]);   //???????????????????
-
-	// const handleNegoNeedIncomming = useCallback(async ({ from, offer }) => {
-	// 	const ans = await peer.getAnswer(offer);
-	// 	socket.emit('peer_nego_done', { to: from, ans })
-	// }, [socket])
-
-	// const handleNegoNeedFinal = useCallback(async ({ ans }) => {
-	// 	await peer.setLocalDescription(ans)
-	// }, []);
-
-
-	// useEffect(() => {
-	// 	peer.peer.addEventListener('negotiationneeded', handleNegoNeeded);
-
-	// 	return () => {
-	// 		peer.peer.removeEventListener('negotiationneeded', handleNegoNeeded);
-	// 	}
-	// }, [handleNegoNeeded])
-
-
-	// useEffect(() => {
-	// 	peer.peer.addEventListener('track', async (ev) => {
-	// 		const remoteStream = ev.streams;
-	// 		// console.log('got tracks', remoteStream)
-
-	// 		setRemoteStream(remoteStream[0]);
-
-	// 		// console.log("remoteStream",remoteStream[0])
-
-	// 	})
-
-	// }, []);
-
-
-
-	// useEffect(() => {
-	// 	socket.on('incomming_call', handleIncommingCall)
-	// 	socket.on('call_accepted', handleCallAccepted)
-	// 	socket.on('peer_nego_needed', handleNegoNeedIncomming)
-	// 	socket.on('peer_nego_final', handleNegoNeedFinal)
-
-	// 	return () => {
-	// 		socket.off('incomming_call', handleIncommingCall)
-	// 		socket.off('call_accepted', handleCallAccepted)
-	// 		socket.off('peer_nego_needed', handleNegoNeedIncomming)
-	// 		socket.off('peer_nego_final', handleNegoNeedFinal)
-
-	// 	}
-	// }, [socket, handleIncommingCall, handleCallAccepted, handleNegoNeedIncomming, handleNegoNeedFinal]);
-
-
-
-	// console.log("myStream", myStream)
-	// console.log("remoteStream", remoteStream)
-
-	// console.log(turn)
+	const getStreamByUsername = (username) => {
+        const userStream = streams.remotestreams?.find(user => user.username === username);
+		
+        return userStream ? userStream.stream : null;
+    };
 
 
 	return (
@@ -337,6 +238,14 @@ function Room() {
 											</div>
 											{user?.user_name}
 										</div>
+
+										<ReactPlayer
+											className=""
+											playing
+											height={100}
+											width={100}
+											url={getStreamByUsername(room.users[eachUserId]?.user_name)}
+										/>
 									</div>
 								);
 							})}
@@ -350,13 +259,20 @@ function Room() {
 							</div>
 							{user_name}
 						</div>
+						<ReactPlayer
+							className=""
+							playing
+							height={200}
+							width={200}
+							url={streams.localstream}
+						/>
 
 						{/* Dice */}
 						<div
 							onClick={turn === Object.keys(room.users).indexOf(userId) ? diceMove : null}
 							className={`h-[60px] w-[60px] rounded-lg bg-white ${turn === Object.keys(room.users).indexOf(userId) ? 'border-green-600 border-4 rounded-xl' : 'border-gray-400'
 								} border-4`}>
-							<img src={isrolling ? 'rollingDice.gif' : `${dicefaces[Dice-1]}.png`} />
+							<img src={isrolling ? 'rollingDice.gif' : `${dicefaces[Dice - 1]}.png`} />
 						</div>
 					</div>
 				</div>
@@ -374,19 +290,6 @@ function Room() {
 				/>
 
 
-
-				{/* Video Call */}
-				{ <div className='absolute top-10 right-0 w-[20vw]'>
-					<button onClick={handleCall} className='text-white bg-green-500 rounded m-4 px-5 py-2'>Call</button>
-					{myStream && <button onClick={sendStreams} className='text-white bg-green-500 rounded m-4 px-5 py-2'>Send video</button>}
-					<h1>MY Video</h1>
-					{myStream && <ReactPlayer className="border border-y-black" playing height={300} width={300} url={myStream} />}
-					<h1>Friend Video</h1>
-					{remoteStream && <ReactPlayer className="border border-y-black" playing height={300} width={300} url={remoteStream} />}
-
-				</div> }
-
-				
 			</div>
 		</>
 

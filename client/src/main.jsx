@@ -4,12 +4,14 @@ import './index.css'
 import App from './App.jsx'
 // import { GlobalProvider } from '../GlobalProvider.jsx'
 import { RoomProvider } from "./context/RoomContext"
-
+import { StreamsProvider } from './context/StreamsContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   // <StrictMode>
   <RoomProvider>
-    <App />
+    <StreamsProvider>
+      <App />
+    </StreamsProvider>
   </RoomProvider>
 
   // </StrictMode>,

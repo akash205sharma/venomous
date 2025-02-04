@@ -25,7 +25,6 @@ const io = new Server(server, {
 
 
 
-
 // // Middleware and routes setup
 // app.use(express.json());
 // app.use('/api/auth', authRoutes); // For authentication (login, signup, etc.)

@@ -89,6 +89,7 @@ export const RoomProvider = ({ children }) => {
         }));
     };
 
+
     const addUser = ({ userId, user }) => {
         setRoom(prevRoom => {
             // Update the users array with the new user

@@ -115,9 +115,9 @@ const VideoCall = () => {
         await consumeAll();
     };
 
-    function findUserVideo(username) {
-        return document.querySelector(`#remote_${username}`)
-    }
+    // function findUserVideo(username) {
+    //     return document.querySelector(`#remote_${username}`)
+    // }
 
 
     async function handleRemoteTrack(stream, username) {
