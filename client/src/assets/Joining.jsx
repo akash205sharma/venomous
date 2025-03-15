@@ -384,7 +384,7 @@ const Joining = () => {
 
 
     return (
-        <div className="bg-[url(bg.avif)] bg-cover bg-center min-h-screen h-max w-screen flex flex-col items-center p-4 relative">
+        <div className="bg-[url(/bg.avif)] bg-cover bg-center min-h-screen h-max w-screen flex flex-col items-center p-4 relative">
 
             <button onClick={handleLeave} className='z-40 py-3 px-6 hover:bg-red-600 transition duration-300 fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {room.roomName} </button>
             {/* {localStream && <ReactPlayer className="border border-y-black" playing height={300} width={300} url={localStream} />} */}

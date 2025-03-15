@@ -198,7 +198,7 @@ function Room() {
 
 	return (
 		<>
-			<div className='z-[-20] bg-[url(bg.avif)] bg-cover h-[100vh] bg-center overflow-y-scroll'>
+			<div className='z-[-20] bg-[url(/bg.avif)] bg-cover h-[100vh] bg-center overflow-y-scroll'>
 
 
 				<button onClick={handleLeave} className='z-40 py-3 px-6 hover:bg-red-600 transition duration-300 fixed top-0 left-[43vw] bg-red-500 rounded-lg p-2 text-white font-bold' >Leave Game Room {room.roomName} </button>
