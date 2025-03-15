@@ -88,7 +88,7 @@ function Entry() {
 
 	return (
 		<>
-			<div className='z-[-20] bg-[url(bg.avif)] bg-cover bg-center bg h-[100vh] flex justify-center items-center '>
+			<div className='z-[-20] bg-[url("/bg.avif")] bg-cover bg-center bg h-[100vh] flex justify-center items-center '>
 
 				<form className='bg-blue-700 rounded-2xl p-10 m-auto flex flex-col gap-8 ' onSubmit={handeljoinRoom}>
 					{/* <div >Join or Create Room </div> */}
