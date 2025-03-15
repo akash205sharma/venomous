@@ -1,0 +1,21 @@
+# Use an official Node.js image with build tools
+FROM node:18-bullseye
+
+# Set working directory
+WORKDIR /app
+
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies (force wrtc to build from source)
+RUN npm install --ignore-scripts && npm rebuild wrtc --build-from-source
+
+# Copy the rest of the app
+COPY . .
+
+# Expose the port your app runs on
+EXPOSE 4000
+
+# Start the server
+CMD ["npm", "start"]
