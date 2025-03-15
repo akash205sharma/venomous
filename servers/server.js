@@ -10,7 +10,7 @@ const socketServer = require('./socketServer'); // Import Socket server setup
 const app = express();
 
 app.use(cors({
-  origin: "https://venomous-git-main-akash205sharmas-projects.vercel.app/",  // The URL of your React frontend
+  origin: 'https://venomous-three.vercel.app',  // The URL of your React frontend
   // origin: "http://localhost:5173",  // The URL of your React frontend
   methods: ["GET", "POST"],         // Allow these HTTP methods
   credentials: true                 // Allow cookies if needed
@@ -19,7 +19,7 @@ app.use(cors({
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: { origin: "https://venomous-git-main-akash205sharmas-projects.vercel.app/", methods: ["GET", "POST"] }
+  cors: { origin: 'https://venomous-three.vercel.app', methods: ["GET", "POST"] }
   // cors: { origin: "http://localhost:5173", methods: ["GET", "POST"] }
 });
  
