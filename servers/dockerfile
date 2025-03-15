@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies (force wrtc to build from source)
-RUN npm install --ignore-scripts && npm rebuild wrtc --build-from-source
+RUN npm install
 
 # Copy the rest of the app
 COPY . .
