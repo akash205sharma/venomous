@@ -15,10 +15,13 @@ if (!userId) {
 
 
 // const socket = io('http://192.168.152.46:4000', {
-const socket = io('http://localhost:4000', {
+// const socket = io('http://localhost:4000', {
+// 	query: { userId }  // send userId to the server
+// });
+
+const socket = io('https://venomous.onrender.com', {
 	query: { userId }  // send userId to the server
 });
-
 
 
 
