@@ -9,7 +9,16 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies (force wrtc to build from source)
+# RUN npm install
+
+# RUN npm install --build-from-source wrtc
+
+RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g node-pre-gyp
+RUN npm install --build-from-source wrtc
 RUN npm install
+
 
 # Copy the rest of the app
 COPY . .
